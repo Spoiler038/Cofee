@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>☕ Тучка ☁️ — Складской учет кофейни</title>
+    <!-- Иконка сайта ☕ -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E☕%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E☕%3C/text%3E%3C/svg%3E">
     <meta name="theme-color" content="#7B8CDE">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -274,7 +277,6 @@
         .sync-status.syncing { color: #F59E0B; }
         .sync-status.success { color: #10B981; }
         
-        /* Стили для модальных окон SweetAlert2 — убираем горизонтальный скролл */
         .swal2-popup {
             max-width: 95vw !important;
             width: auto !important;
@@ -292,7 +294,19 @@
             margin: 8px 0 !important;
         }
         
-        /* Стили для аналитики продаж */
+        .form-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1E293B;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            display: block;
+            text-align: left;
+        }
+        .form-label:first-of-type {
+            margin-top: 0;
+        }
+        
         .sales-category-group {
             margin-bottom: 16px;
             border-left: 3px solid #7B8CDE;
@@ -318,6 +332,18 @@
             font-weight: 600;
             color: #7B8CDE;
         }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+        .input-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1E293B;
+        }
     </style>
 </head>
 <body>
@@ -340,8 +366,8 @@
     <div class="container">
         <div v-if="!user" class="card" style="max-width: 480px; margin: 80px auto;">
             <h2 style="margin-bottom: 20px;">☕ Кофейня Тучка ☁️</h2>
-            <input type="text" v-model="loginPhone" placeholder="Телефон (+7, 8 или 9...)" class="input" style="margin-bottom: 12px;">
-            <input type="password" v-model="loginPass" placeholder="Пароль" class="input" style="margin-bottom: 20px;">
+            <input type="text" v-model="loginPhone" @keyup.enter="handleLogin" placeholder="Телефон (+7, 8 или 9...)" class="input" style="margin-bottom: 12px;">
+            <input type="password" v-model="loginPass" @keyup.enter="handleLogin" placeholder="Пароль" class="input" style="margin-bottom: 20px;">
             <button @click="handleLogin" class="btn btn-primary" style="width:100%">Войти</button>
             <p style="margin-top: 20px; font-size: 12px; text-align:center;">Демо: admin / +79991234567 (123) | barista / +79876543210 (123)</p>
         </div>
@@ -444,7 +470,7 @@
                 </div>
             </div>
 
-            <!-- Аналитика с детализацией по товарам -->
+            <!-- Аналитика -->
             <div v-show="activeTab === 'analytics'">
                 <h3>📈 Аналитика</h3>
                 <div class="card">
@@ -459,7 +485,6 @@
                     </div>
                 </div>
                 
-                <!-- Финансовый отчет -->
                 <div class="card" v-if="profitReport">
                     <h4>💰 Финансовый отчет</h4>
                     <div class="inventory-row">
@@ -480,7 +505,6 @@
                     </div>
                 </div>
                 
-                <!-- Детализация продаж по категориям -->
                 <div class="card" v-if="salesByCategory.length">
                     <h4>📊 Продажи за период</h4>
                     <div v-for="category in salesByCategory" :key="category.name" class="sales-category-group">
@@ -558,12 +582,10 @@
     const BRANCH = 'main';
     // ==============================================
 
-    // Форматирование чисел (округляем до 1 знака)
     function formatNumber(value) {
         if (value === undefined || value === null) return '0';
         const num = parseFloat(value);
         if (isNaN(num)) return '0';
-        // Округляем до 1 десятичного знака
         return Math.round(num * 10) / 10;
     }
 
@@ -784,32 +806,73 @@
             
             function logout() { user.value = null; }
 
+            // Функция для создания HTML формы с подписями
+            function getItemFormHtml(obj, categoriesList) {
+                return `
+                    <div class="input-group">
+                        <label>📝 Название товара</label>
+                        <input id="name" class="swal2-input" placeholder="Например: Зерновой кофе" value="${obj.name.replace(/"/g, '&quot;')}" style="width:100%;">
+                    </div>
+                    <div class="input-group">
+                        <label>📂 Категория</label>
+                        <select id="cat" class="swal2-select" style="width:100%;">
+                            ${categoriesList.map(c => `<option ${c === obj.category ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>📏 Единица измерения</label>
+                        <input id="unit" class="swal2-input" placeholder="кг, л, шт, порция" value="${obj.unit}" style="width:100%;">
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="input-group">
+                            <label>💰 Себестоимость (₽)</label>
+                            <input id="cost" type="number" step="0.01" class="swal2-input" placeholder="0.00" value="${obj.cost}" style="width:100%;">
+                        </div>
+                        <div class="input-group">
+                            <label>🏷️ Продажная цена (₽)</label>
+                            <input id="sellPrice" type="number" step="0.01" class="swal2-input" placeholder="0.00" value="${obj.sellPrice || 0}" style="width:100%;">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>📦 Начальное количество</label>
+                        <input id="qty" type="number" step="0.01" class="swal2-input" placeholder="0" value="${obj.quantity}" style="width:100%;">
+                    </div>
+                `;
+            }
+
             async function openItemModal(item) {
                 if(user.value.role !== 'admin') return;
-                let obj = item ? {...item} : { id: Date.now()+'_'+Math.random(), name:'', category: categories.value[0] || 'Продукты', unit:'шт', cost:0, sellPrice:0, quantity:0 };
+                let obj = item ? {...item} : { 
+                    id: Date.now()+'_'+Math.random(), 
+                    name: '', 
+                    category: categories.value[0] || 'Продукты', 
+                    unit: 'шт', 
+                    cost: 0, 
+                    sellPrice: 0, 
+                    quantity: 0 
+                };
+                
+                const categoriesList = categories.value.length ? categories.value : ['Продукты', 'Хозтовары', 'Упаковка'];
+                
                 Swal.fire({
-                    title: item ? 'Редактировать товар' : 'Новый товар',
-                    html: `<div style="display:flex; flex-direction:column; gap:8px;">
-                        <input id="name" class="swal2-input" placeholder="Название товара" value="${obj.name}" style="width:100%;">
-                        <select id="cat" class="swal2-select" style="width:100%;">${categories.value.length ? categories.value.map(c=>`<option ${c===obj.category?'selected':''}>${c}</option>`).join('') : '<option>Продукты</option>'}</select>
-                        <input id="unit" class="swal2-input" placeholder="Единица измерения (кг, л, шт)" value="${obj.unit}" style="width:100%;">
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                            <input id="cost" type="number" step="0.01" class="swal2-input" placeholder="Себестоимость" value="${obj.cost}" style="width:100%;">
-                            <input id="sellPrice" type="number" step="0.01" class="swal2-input" placeholder="Продажная цена" value="${obj.sellPrice || 0}" style="width:100%;">
-                        </div>
-                        <input id="qty" type="number" step="0.01" class="swal2-input" placeholder="Начальное количество" value="${obj.quantity}" style="width:100%;">
-                    </div>`,
+                    title: item ? '✏️ Редактировать товар' : '➕ Новый товар',
+                    html: getItemFormHtml(obj, categoriesList),
                     focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Сохранить',
+                    cancelButtonText: 'Отмена',
                     preConfirm: () => {
-                        let name = document.getElementById('name').value;
-                        let category = document.getElementById('cat').value;
-                        let unit = document.getElementById('unit').value;
-                        let cost = parseFloat(document.getElementById('cost').value);
-                        let sellPrice = parseFloat(document.getElementById('sellPrice').value);
-                        let qty = parseFloat(document.getElementById('qty').value);
-                        if(!name) Swal.showValidationMessage('Введите название товара');
-                        if(isNaN(cost)) Swal.showValidationMessage('Введите себестоимость');
-                        return {name, category, unit, cost, sellPrice: isNaN(sellPrice)?0:sellPrice, quantity: qty || 0};
+                        let name = document.getElementById('name')?.value;
+                        let category = document.getElementById('cat')?.value;
+                        let unit = document.getElementById('unit')?.value;
+                        let cost = parseFloat(document.getElementById('cost')?.value);
+                        let sellPrice = parseFloat(document.getElementById('sellPrice')?.value);
+                        let qty = parseFloat(document.getElementById('qty')?.value);
+                        
+                        if(!name) Swal.showValidationMessage('❌ Введите название товара');
+                        else if(!unit) Swal.showValidationMessage('❌ Введите единицу измерения');
+                        else if(isNaN(cost)) Swal.showValidationMessage('❌ Введите себестоимость');
+                        else return {name, category, unit, cost, sellPrice: isNaN(sellPrice)?0:sellPrice, quantity: isNaN(qty)?0:qty};
                     }
                 }).then(async res => { 
                     if(res.isConfirmed) { 
@@ -820,21 +883,31 @@
                             stockItems.value.push({id: obj.id, ...res.value});
                         }
                         await saveStock();
-                        Swal.fire('Сохранено');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Готово!',
+                            text: 'Товар сохранён',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
                     } 
                 });
             }
 
             async function openIncomeModal(item) {
                 Swal.fire({ 
-                    title: `Приход: ${item.name}`, 
-                    input: 'number', 
-                    inputLabel: `Количество (${item.unit})`, 
-                    inputAttributes: { step: '0.01' },
-                    showCancelButton: true, 
-                    preConfirm: (val) => { 
-                        let q = parseFloat(val); 
-                        return (isNaN(q)||q<=0) ? false : q; 
+                    title: `📦 Приход: ${item.name}`, 
+                    html: `<div class="input-group"><label>Количество (${item.unit})</label><input id="income-qty" type="number" step="0.01" class="swal2-input" placeholder="0"></div>`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Оформить приход',
+                    cancelButtonText: 'Отмена',
+                    preConfirm: () => { 
+                        let q = parseFloat(document.getElementById('income-qty')?.value); 
+                        if(isNaN(q) || q <= 0) {
+                            Swal.showValidationMessage('Введите корректное количество');
+                            return false;
+                        }
+                        return q; 
                     } 
                 }).then(async res => {
                     if(res.isConfirmed && res.value) {
@@ -851,7 +924,12 @@
                                 costPerUnit: item.cost, 
                                 date: new Date().toISOString() 
                             });
-                            Swal.fire('Приход оформлен');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Приход оформлен',
+                                text: `+${res.value} ${item.unit}`,
+                                timer: 1500
+                            });
                         }
                     }
                 });
@@ -859,19 +937,22 @@
 
             async function openDamageModal(item) {
                 Swal.fire({ 
-                    title: `Списание: ${item.name}`, 
-                    text: 'Причина: порча, бой, истечение срока', 
-                    input: 'number', 
-                    inputLabel: `Количество для списания (${item.unit})`,
-                    inputAttributes: { step: '0.01' },
-                    showCancelButton: true, 
-                    preConfirm: (val) => { 
-                        let q = parseFloat(val); 
-                        if(isNaN(q)||q<=0) return false; 
+                    title: `⚠️ Списание: ${item.name}`, 
+                    html: `<div class="input-group"><label>Количество для списания (${item.unit})</label><input id="damage-qty" type="number" step="0.01" class="swal2-input" placeholder="0" max="${item.quantity}"></div>
+                           <p style="font-size:12px; color:#64748B; margin-top:8px;">Причина: порча, бой, истечение срока</p>`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Списать',
+                    cancelButtonText: 'Отмена',
+                    preConfirm: () => { 
+                        let q = parseFloat(document.getElementById('damage-qty')?.value); 
+                        if(isNaN(q) || q <= 0) {
+                            Swal.showValidationMessage('Введите корректное количество');
+                            return false;
+                        }
                         if(q > item.quantity) { 
-                            Swal.showValidationMessage('Недостаточно на складе'); 
+                            Swal.showValidationMessage(`Недостаточно на складе. Доступно: ${item.quantity} ${item.unit}`); 
                             return false; 
-                        } 
+                        }
                         return q; 
                     } 
                 }).then(async res => {
@@ -890,7 +971,12 @@
                                 reason: 'порча',
                                 date: new Date().toISOString() 
                             });
-                            Swal.fire('Списано', `Списано ${res.value} ${item.unit}`, 'warning');
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Списано',
+                                text: `-${res.value} ${item.unit}`,
+                                timer: 1500
+                            });
                         }
                     }
                 });
@@ -914,8 +1000,16 @@
                 
                 const confirm = await Swal.fire({ 
                     title: `Продажа ${card.name}`, 
-                    html: `Себестоимость: ${formatNumber(calculateCardCost(card))}₽<br>Продажа: ${formatNumber(card.sellPrice || 0)}₽<br>Прибыль: ${formatNumber((card.sellPrice || 0) - calculateCardCost(card))}₽`, 
-                    showCancelButton: true 
+                    html: `
+                        <div style="text-align:left;">
+                            <div class="inventory-row"><span>Себестоимость:</span><span>${formatNumber(calculateCardCost(card))} ₽</span></div>
+                            <div class="inventory-row"><span>Цена продажи:</span><span>${formatNumber(card.sellPrice || 0)} ₽</span></div>
+                            <div class="inventory-row"><span>Прибыль:</span><span class="profit-positive">${formatNumber((card.sellPrice || 0) - calculateCardCost(card))} ₽</span></div>
+                        </div>
+                    `, 
+                    showCancelButton: true,
+                    confirmButtonText: '✅ Продать',
+                    cancelButtonText: 'Отмена'
                 });
                 if(!confirm.isConfirmed) return;
                 
@@ -938,7 +1032,12 @@
                     ingredients: card.ingredients,
                     date: new Date().toISOString() 
                 });
-                Swal.fire('Продано', `${card.name} продан`, 'success');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Продано!',
+                    text: `${card.name} продан`,
+                    timer: 1500
+                });
             }
 
             function openSaleByRecipeModal() {
@@ -947,10 +1046,12 @@
                     return; 
                 }
                 Swal.fire({ 
-                    title: 'Продажа по рецепту', 
+                    title: 'Выберите напиток', 
                     input: 'select', 
                     inputOptions: Object.fromEntries(techCards.value.map(c => [c.id, c.name])), 
-                    showCancelButton: true 
+                    showCancelButton: true,
+                    confirmButtonText: 'Продать',
+                    cancelButtonText: 'Отмена'
                 }).then(res => {
                     if(res.isConfirmed && res.value) {
                         let card = techCards.value.find(c => c.id === res.value);
@@ -971,75 +1072,122 @@
             async function openTechCardModal(card) {
                 if(user.value.role !== 'admin') return;
                 let cardObj = card ? {...card} : { id: Date.now()+'_tc', name: '', sellPrice: 0, ingredients: [] };
+                
+                // Создаём HTML для модального окна техкарты
+                const getTechCardHtml = (obj) => {
+                    const ingredientsHtml = obj.ingredients.map((ing, idx) => `
+                        <div style="margin-bottom:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                            <select class="ing-select" data-idx="${idx}" style="flex:2; min-width:120px; padding:8px; border-radius:16px; border:1px solid #E2E8F0;">
+                                ${stockItems.value.map(s => `<option value="${s.id}" ${s.id === ing.itemId ? 'selected' : ''}>${s.name} (${s.unit})</option>`).join('')}
+                            </select>
+                            <input class="ing-qty" data-idx="${idx}" type="number" step="0.01" value="${ing.qty}" placeholder="Кол-во" style="width:80px; padding:8px; border-radius:16px; border:1px solid #E2E8F0;">
+                            <button type="button" class="del-ing" data-idx="${idx}" style="background:#EF4444; color:white; border:none; border-radius:20px; padding:6px 12px; cursor:pointer;">🗑️</button>
+                        </div>
+                    `).join('');
+                    
+                    return `
+                        <div class="input-group">
+                            <label>🍸 Название напитка</label>
+                            <input id="tc-name" class="swal2-input" placeholder="Например: Латте, Капучино" value="${obj.name}">
+                        </div>
+                        <div class="input-group">
+                            <label>💰 Продажная цена (₽)</label>
+                            <input id="tc-sellPrice" type="number" step="0.01" class="swal2-input" placeholder="0.00" value="${obj.sellPrice || 0}">
+                        </div>
+                        <div class="input-group">
+                            <label>📋 Ингредиенты</label>
+                            <div id="ing-list" style="max-height:300px;overflow:auto;margin:10px 0;">${ingredientsHtml || '<div style="text-align:center; color:#94A3B8; padding:20px;">Нет ингредиентов. Нажмите "+" чтобы добавить</div>'}</div>
+                            <button type="button" id="add-ing" class="btn btn-outline" style="margin:8px 0; width:100%;">+ Добавить ингредиент</button>
+                        </div>
+                    `;
+                };
+                
+                const renderIngredients = (obj) => {
+                    const container = document.getElementById('ing-list');
+                    if(!container) return;
+                    if(!obj.ingredients.length) {
+                        container.innerHTML = '<div style="text-align:center; color:#94A3B8; padding:20px;">Нет ингредиентов. Нажмите "+" чтобы добавить</div>';
+                        return;
+                    }
+                    container.innerHTML = obj.ingredients.map((ing, idx) => `
+                        <div style="margin-bottom:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                            <select class="ing-select" data-idx="${idx}" style="flex:2; min-width:120px; padding:8px; border-radius:16px; border:1px solid #E2E8F0;">
+                                ${stockItems.value.map(s => `<option value="${s.id}" ${s.id === ing.itemId ? 'selected' : ''}>${s.name} (${s.unit})</option>`).join('')}
+                            </select>
+                            <input class="ing-qty" data-idx="${idx}" type="number" step="0.01" value="${ing.qty}" placeholder="Кол-во" style="width:80px; padding:8px; border-radius:16px; border:1px solid #E2E8F0;">
+                            <button type="button" class="del-ing" data-idx="${idx}" style="background:#EF4444; color:white; border:none; border-radius:20px; padding:6px 12px; cursor:pointer;">🗑️</button>
+                        </div>
+                    `).join('');
+                    
+                    document.querySelectorAll('.del-ing').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const idx = parseInt(btn.dataset.idx);
+                            obj.ingredients.splice(idx, 1);
+                            renderIngredients(obj);
+                        });
+                    });
+                };
+                
                 Swal.fire({
-                    title: card ? 'Редактировать карту' : 'Новая карта',
-                    html: `<div style="display:flex; flex-direction:column; gap:8px;">
-                        <input id="tc-name" class="swal2-input" placeholder="Название напитка" value="${cardObj.name}">
-                        <input id="tc-sellPrice" type="number" step="0.01" class="swal2-input" placeholder="Продажная цена (₽)" value="${cardObj.sellPrice || 0}">
-                        <div id="ing-list" style="max-height:300px;overflow:auto;margin:10px 0;"></div>
-                        <button type="button" id="add-ing" class="btn btn-outline" style="margin:8px;">+ Добавить ингредиент</button>
-                    </div>`,
-                    didOpen: () => { renderIngredients(cardObj); },
+                    title: card ? '✏️ Редактировать техкарту' : '➕ Новая техкарта',
+                    html: getTechCardHtml(cardObj),
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Сохранить',
+                    cancelButtonText: 'Отмена',
+                    didOpen: () => {
+                        renderIngredients(cardObj);
+                        document.getElementById('add-ing')?.addEventListener('click', () => {
+                            if(stockItems.value.length) {
+                                cardObj.ingredients.push({
+                                    itemId: stockItems.value[0]?.id,
+                                    itemName: stockItems.value[0]?.name,
+                                    qty: 0,
+                                    unit: stockItems.value[0]?.unit
+                                });
+                                renderIngredients(cardObj);
+                            } else {
+                                Swal.fire('Нет товаров', 'Сначала добавьте товары на склад', 'warning');
+                            }
+                        });
+                    },
                     preConfirm: () => {
-                        let name = document.getElementById('tc-name').value;
-                        let sellPrice = parseFloat(document.getElementById('tc-sellPrice').value);
-                        if(!name) Swal.showValidationMessage('Введите название');
-                        let ings = collectIngredientsFromDOM();
-                        return { name, sellPrice: isNaN(sellPrice)?0:sellPrice, ingredients: ings };
+                        let name = document.getElementById('tc-name')?.value;
+                        let sellPrice = parseFloat(document.getElementById('tc-sellPrice')?.value);
+                        if(!name) Swal.showValidationMessage('Введите название напитка');
+                        
+                        const ingredients = [];
+                        document.querySelectorAll('.ing-select').forEach((sel, idx) => {
+                            const itemId = sel.value;
+                            const qty = parseFloat(document.querySelector(`.ing-qty[data-idx="${idx}"]`)?.value);
+                            const stockItem = stockItems.value.find(s => s.id === itemId);
+                            if(stockItem && !isNaN(qty) && qty > 0) {
+                                ingredients.push({
+                                    itemId: stockItem.id,
+                                    itemName: stockItem.name,
+                                    qty: qty,
+                                    unit: stockItem.unit
+                                });
+                            }
+                        });
+                        
+                        return { name, sellPrice: isNaN(sellPrice) ? 0 : sellPrice, ingredients };
                     }
-                }).then(async res => { if(res.isConfirmed) {
-                    cardObj.name = res.value.name; 
-                    cardObj.sellPrice = res.value.sellPrice; 
-                    cardObj.ingredients = res.value.ingredients;
-                    if(card) {
-                        const idx = techCards.value.findIndex(c => c.id === card.id);
-                        if(idx !== -1) techCards.value[idx] = cardObj;
-                    } else {
-                        techCards.value.push(cardObj);
+                }).then(async res => {
+                    if(res.isConfirmed) {
+                        cardObj.name = res.value.name;
+                        cardObj.sellPrice = res.value.sellPrice;
+                        cardObj.ingredients = res.value.ingredients;
+                        if(card) {
+                            const idx = techCards.value.findIndex(c => c.id === card.id);
+                            if(idx !== -1) techCards.value[idx] = cardObj;
+                        } else {
+                            techCards.value.push(cardObj);
+                        }
+                        await saveTechCards();
+                        Swal.fire('Готово!', 'Техкарта сохранена', 'success');
                     }
-                    await saveTechCards();
-                    Swal.fire('Готово');
-                }});
-                
-                function renderIngredients(cardObj) { 
-                    const container = document.getElementById('ing-list'); 
-                    if(!container) return; 
-                    container.innerHTML=''; 
-                    if(!cardObj.ingredients.length) {
-                        container.innerHTML = '<div style="text-align:center; color:#94A3B8; padding:10px;">Нет ингредиентов. Нажмите "+" чтобы добавить</div>';
-                    }
-                    cardObj.ingredients.forEach((ing,idx)=>{ 
-                        let div=document.createElement('div'); 
-                        div.style.marginBottom='8px'; 
-                        div.style.display='flex'; 
-                        div.style.gap='8px';
-                        div.style.flexWrap='wrap';
-                        div.innerHTML=`<select class="ing-select" data-idx="${idx}" style="flex:2; min-width:120px;">${stockItems.value.map(s=>`<option value="${s.id}" ${s.id===ing.itemId?'selected':''}>${s.name} (${s.unit})</option>`).join('')}</select> 
-                                   <input class="ing-qty" data-idx="${idx}" type="number" step="0.01" value="${ing.qty}" style="width:80px;" placeholder="Кол-во">
-                                   <button type="button" class="del-ing" data-idx="${idx}" style="background:#EF4444; color:white; border:none; border-radius:20px; padding:4px 10px;">🗑️</button>`; 
-                        container.appendChild(div); 
-                    }); 
-                    document.querySelectorAll('.del-ing').forEach(btn=>btn.addEventListener('click',(e)=>{ 
-                        let idx=parseInt(btn.dataset.idx); 
-                        cardObj.ingredients.splice(idx,1); 
-                        renderIngredients(cardObj); 
-                    })); 
-                    document.getElementById('add-ing')?.addEventListener('click',()=>{ 
-                        cardObj.ingredients.push({itemId: stockItems.value[0]?.id, itemName:stockItems.value[0]?.name, qty:0, unit:stockItems.value[0]?.unit}); 
-                        renderIngredients(cardObj); 
-                    }); 
-                }
-                
-                function collectIngredientsFromDOM() { 
-                    let ings=[]; 
-                    document.querySelectorAll('.ing-select').forEach((sel,idx)=>{ 
-                        let itemId=sel.value; 
-                        let qty=parseFloat(document.querySelector(`.ing-qty[data-idx="${idx}"]`).value); 
-                        let stockItem=stockItems.value.find(s=>s.id===itemId); 
-                        if(stockItem && !isNaN(qty) && qty > 0) ings.push({itemId, itemName:stockItem.name, qty, unit:stockItem.unit}); 
-                    }); 
-                    return ings; 
-                }
+                });
             }
 
             function startInventory() { 
@@ -1069,7 +1217,6 @@
             function cancelInventory() { activeInventory.value=null; inventoryCounts.value={}; }
             function viewInventoryReport(rep) { Swal.fire('Детали инвентаризации', `<pre style="text-align:left;">${rep.differences}</pre>`,'info'); }
 
-            // Аналитика с детализацией по категориям
             async function generateAnalytics() {
                 let start = new Date(analyticsStartDate.value); 
                 let end = new Date(analyticsEndDate.value); 
@@ -1083,8 +1230,7 @@
                 let damageCost = damageInPeriod.reduce((sum,d) => sum + (d.costPerUnit * d.quantity), 0);
                 profitReport.value = { revenue, cost, profit: revenue - cost, damageCost };
                 
-                // Группировка продаж по категориям
-                const salesMap = new Map(); // key: "category|itemName|unit"
+                const salesMap = new Map();
                 
                 for (const sale of salesInPeriod) {
                     if (sale.ingredients && Array.isArray(sale.ingredients)) {
@@ -1106,7 +1252,6 @@
                     }
                 }
                 
-                // Группируем по категориям
                 const grouped = new Map();
                 for (const item of salesMap.values()) {
                     if (!grouped.has(item.category)) {
@@ -1157,15 +1302,18 @@
             async function openUserModal(u) {
                 Swal.fire({
                     title: u ? 'Редактировать пользователя' : 'Новый пользователь',
-                    html: `<div style="display:flex; flex-direction:column; gap:8px;">
-                        <input id="name" class="swal2-input" placeholder="Имя" value="${u?.name || ''}">
-                        <input id="phone" class="swal2-input" placeholder="Телефон (79991234567)" value="${u?.phone || ''}">
-                        <input id="password" class="swal2-input" placeholder="Пароль" value="${u?.password || ''}">
-                        <select id="role" class="swal2-select">
+                    html: `
+                        <div class="input-group"><label>👤 Имя</label><input id="name" class="swal2-input" placeholder="Имя" value="${u?.name || ''}"></div>
+                        <div class="input-group"><label>📱 Телефон</label><input id="phone" class="swal2-input" placeholder="79991234567" value="${u?.phone || ''}"></div>
+                        <div class="input-group"><label>🔒 Пароль</label><input id="password" class="swal2-input" placeholder="Пароль" value="${u?.password || ''}"></div>
+                        <div class="input-group"><label>👔 Роль</label><select id="role" class="swal2-select">
                             <option value="admin" ${u?.role === 'admin' ? 'selected' : ''}>Администратор</option>
                             <option value="barista" ${u?.role === 'barista' ? 'selected' : ''}>Бариста</option>
-                        </select>
-                    </div>`,
+                        </select></div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Сохранить',
+                    cancelButtonText: 'Отмена',
                     preConfirm: () => ({
                         name: document.getElementById('name').value,
                         phone: normalizePhone(document.getElementById('phone').value),
@@ -1182,7 +1330,7 @@
                             usersList.value.push({ id: Date.now().toString(), ...res.value });
                         }
                         await saveUsers();
-                        Swal.fire('Сохранено');
+                        Swal.fire('Сохранено', 'Пользователь сохранён', 'success');
                     }
                 });
             }
@@ -1198,6 +1346,7 @@
                 if(confirm.isConfirmed) { 
                     usersList.value = usersList.value.filter(usr => usr.id !== u.id);
                     await saveUsers(); 
+                    Swal.fire('Удалено', 'Пользователь удалён', 'success');
                 } 
             }
 
@@ -1234,7 +1383,7 @@
                     if(data.inventory) inventoryReports.value = data.inventory;
                     if(data.users) usersList.value = data.users;
                     await forceSync();
-                    Swal.fire('Импорт завершен'); 
+                    Swal.fire('Импорт завершен', 'Данные восстановлены', 'success'); 
                 }; 
                 reader.readAsText(file); 
             }
