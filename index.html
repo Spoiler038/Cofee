@@ -17,6 +17,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        /* Скрывает весь контент до инициализации Vue */
+        [v-cloak] { display: none !important; }
+
         * {
             margin: 0;
             padding: 0;
@@ -347,7 +350,7 @@
     </style>
 </head>
 <body>
-<div id="app">
+<div id="app" v-cloak>
     <div class="app-header" v-if="user">
         <div class="role-badge"><i class="fas fa-cloud"></i> {{ user.role === 'admin' ? 'Администратор' : 'Бариста' }} | {{ user.phone }}</div>
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -576,7 +579,7 @@
     const { createApp, ref, computed, onMounted } = Vue;
 
     // ============== НАСТРОЙКИ GITHUB ==============
-    const GITHUB_TOKEN = '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';
+    const GITHUB_TOKEN = '__GITHUB_TOKEN_PLACEHOLDER__';
     const REPO_OWNER = 'spoiler038';
     const REPO_NAME = 'Coffee';
     const BRANCH = 'main';
@@ -609,9 +612,15 @@
                     headers: this.headers
                 });
                 if (response.status === 404) return [];
+                if (response.status === 401) {
+                    console.error('GitHub API: 401 Unauthorized. Проверьте токен.');
+                    return [];
+                }
                 const data = await response.json();
-                const content = atob(data.content);
-                return JSON.parse(content);
+                // GitHub API возвращает base64 с переносами строк (\n) — их нужно убрать перед atob
+                const cleanBase64 = data.content.replace(/\n/g, '');
+                const decoded = decodeURIComponent(escape(atob(cleanBase64)));
+                return JSON.parse(decoded);
             } catch (error) {
                 console.error(`Ошибка загрузки ${filename}:`, error);
                 return [];
