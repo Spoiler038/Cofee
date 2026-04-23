@@ -575,11 +575,13 @@
 </div>
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<!-- Токен загружается из config.js, который генерируется GitHub Actions -->
+<script src="config.js"></script>
 <script>
     const { createApp, ref, computed, onMounted } = Vue;
 
     // ============== НАСТРОЙКИ GITHUB ==============
-    const GITHUB_TOKEN = '__GITHUB_TOKEN_PLACEHOLDER__';
+    // GITHUB_TOKEN берётся из config.js (не хранится в репозитории)
     const REPO_OWNER = 'spoiler038';
     const REPO_NAME = 'Coffee';
     const BRANCH = 'main';
