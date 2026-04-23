@@ -3,1426 +3,1323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Тучка ☁️ — Складской учет кофейни</title>
-    <!-- Иконка сайта ☕ -->
+    <title>Тучка ☕ — Складской учет</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E☕%3C/text%3E%3C/svg%3E">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E☕%3C/text%3E%3C/svg%3E">
-    <meta name="theme-color" content="#7B8CDE">
+    <meta name="theme-color" content="#2D1B69">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="Складской учет для кофейни. Управление товарами, техкартами, продажами и инвентаризацией.">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* Скрывает весь контент до инициализации Vue */
         [v-cloak] { display: none !important; }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+        :root {
+            --primary: #6C5CE7;
+            --primary-dark: #5849c2;
+            --primary-light: #EEF0FF;
+            --accent: #00CEC9;
+            --danger: #E17055;
+            --success: #00B894;
+            --warning: #FDCB6E;
+            --bg: #F7F6FB;
+            --card: #FFFFFF;
+            --text: #1E1B3A;
+            --text-muted: #8A85A8;
+            --border: #EAE8F4;
+            --header-h: 56px;
+            --nav-h: 68px;
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: #F4F6FA;
-            color: #1E293B;
-            padding-bottom: 0;
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 1rem;
-            padding-top: 70px;
-            padding-bottom: 80px;
-        }
-
+        /* ===== HEADER ===== */
         .app-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255,255,255,0.96);
-            backdrop-filter: blur(12px);
-            padding: 10px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--header-h);
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(16px);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 16px;
             z-index: 99;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            flex-wrap: wrap;
-            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 12px rgba(108,92,231,0.07);
         }
         .role-badge {
-            background: #1E293B;
+            background: var(--primary);
             color: white;
-            padding: 5px 12px;
+            padding: 5px 14px;
             border-radius: 40px;
             font-size: 12px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            font-weight: 700;
+            display: inline-flex; align-items: center; gap: 6px;
+            letter-spacing: 0.2px;
         }
+        .role-badge.superadmin { background: linear-gradient(135deg, #6C5CE7, #00CEC9); }
+        .header-right { display: flex; align-items: center; gap: 8px; }
+        .sync-status {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 11px; font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg);
+            padding: 4px 10px; border-radius: 20px;
+        }
+        .sync-status.syncing { color: var(--warning); }
+        .sync-status.success { color: var(--success); }
+        .sync-status.error { color: var(--danger); }
         .logout-btn {
-            background: #F1F5F9;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 40px;
-            font-size: 12px;
-            cursor: pointer;
+            background: var(--bg); border: none;
+            padding: 5px 12px; border-radius: 40px;
+            font-size: 12px; font-weight: 600;
+            cursor: pointer; color: var(--text-muted);
+            font-family: inherit;
         }
+        .logout-btn:hover { background: var(--border); }
 
+        /* ===== BOTTOM NAV ===== */
         .bottom-nav-wrapper {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255,255,255,0.96);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(0,0,0,0.05);
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
             z-index: 100;
-            overflow-x: auto;
-            overflow-y: hidden;
+            overflow-x: auto; overflow-y: hidden;
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
+            scrollbar-width: none;
+            height: var(--nav-h);
         }
+        .bottom-nav-wrapper::-webkit-scrollbar { display: none; }
         .bottom-nav {
             display: inline-flex;
-            padding: 8px 12px 16px;
-            gap: 4px;
+            padding: 6px 8px 10px;
+            gap: 2px;
             min-width: 100%;
+            height: 100%;
+            align-items: center;
         }
         .nav-item {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            background: none;
-            border: none;
-            font-family: inherit;
-            font-size: 11px;
-            font-weight: 500;
-            color: #94A3B8;
+            display: inline-flex; flex-direction: column; align-items: center; gap: 3px;
+            background: none; border: none; font-family: inherit;
+            font-size: 10px; font-weight: 700;
+            color: var(--text-muted);
             transition: all 0.2s ease;
             cursor: pointer;
-            padding: 6px 14px;
-            border-radius: 30px;
-            white-space: nowrap;
+            padding: 6px 12px; border-radius: 16px;
+            white-space: nowrap; letter-spacing: 0.3px;
         }
-        .nav-item i { font-size: 20px; }
-        .nav-item.active {
-            color: #7B8CDE;
-            background: #F0F2FF;
+        .nav-item i { font-size: 18px; }
+        .nav-item.active { color: var(--primary); background: var(--primary-light); }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 960px; margin: 0 auto;
+            padding: 12px 12px calc(var(--nav-h) + 12px);
+            padding-top: calc(var(--header-h) + 12px);
         }
 
+        /* ===== LOGIN ===== */
+        .login-wrap {
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+        .login-card {
+            background: white;
+            border-radius: 28px;
+            padding: 36px 32px;
+            width: 100%; max-width: 420px;
+            box-shadow: 0 8px 40px rgba(108,92,231,0.13);
+            text-align: center;
+        }
+        .login-logo { font-size: 52px; margin-bottom: 8px; }
+        .login-title {
+            font-size: 24px; font-weight: 800;
+            color: var(--text); margin-bottom: 4px;
+        }
+        .login-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+        .login-card .input { margin-bottom: 12px; }
+        .login-card .btn-primary { width: 100%; margin-top: 8px; font-size: 15px; padding: 14px; }
+
+        /* ===== CARDS ===== */
         .card {
-            background: white;
-            border-radius: 24px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            border: 1px solid #EEF2F6;
+            background: var(--card);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
         }
+        .card-title {
+            font-size: 14px; font-weight: 800;
+            color: var(--text); margin-bottom: 14px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        /* ===== BUTTONS ===== */
         .btn {
-            background: #F1F5F9;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-family: inherit;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.15s;
+            background: var(--bg); border: none;
+            padding: 9px 16px; border-radius: 30px;
+            font-weight: 700; font-family: inherit;
+            font-size: 13px; cursor: pointer;
+            transition: all 0.15s; color: var(--text);
+            display: inline-flex; align-items: center; gap: 6px;
         }
-        .btn-primary { background: #7B8CDE; color: white; }
-        .btn-primary:hover { background: #6A7BCC; }
-        .btn-danger { background: #EF4444; color: white; }
-        .btn-success { background: #10B981; color: white; }
+        .btn:hover { filter: brightness(0.95); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+        .btn-icon { padding: 7px 10px; }
+
+        /* ===== INPUTS ===== */
         .input, select, textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 20px;
-            border: 1px solid #E2E8F0;
-            font-family: inherit;
-            font-size: 14px;
-            background: white;
+            width: 100%; padding: 11px 15px;
+            border-radius: 14px; border: 1.5px solid var(--border);
+            font-family: inherit; font-size: 14px;
+            background: var(--bg); color: var(--text);
+            transition: border-color 0.2s;
         }
-        .input:focus, select:focus {
-            outline: none;
-            border-color: #7B8CDE;
+        .input:focus, select:focus { outline: none; border-color: var(--primary); background: white; }
+
+        /* ===== ROWS ===== */
+        .row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid var(--border);
+            gap: 8px;
         }
-        .inventory-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            border-bottom: 1px solid #EDF2F7;
-            padding: 12px 0;
+        .row:last-child { border-bottom: none; padding-bottom: 0; }
+        .row:first-child { padding-top: 0; }
+        .row-left { flex: 1; min-width: 0; }
+        .row-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .item-name { font-weight: 700; font-size: 14px; }
+        .item-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .qty-badge {
+            font-weight: 800; font-size: 14px;
+            color: var(--primary); white-space: nowrap;
         }
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        @media (max-width: 640px) {
-            .grid-2 { grid-template-columns: 1fr; }
-            .container { padding: 0.75rem; padding-top: 75px; padding-bottom: 85px; }
-            .inventory-row { flex-direction: column; align-items: flex-start; }
-        }
+
+        /* ===== BADGE ===== */
         .badge {
-            background: #F1F5F9;
-            padding: 4px 10px;
-            border-radius: 30px;
-            font-size: 11px;
-        }
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-            align-items: center;
-        }
-        .profit-positive { color: #10B981; font-weight: 600; }
-        .profit-negative { color: #EF4444; }
-        .date-range {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .sync-btn {
-            position: fixed;
-            bottom: 80px;
-            right: 16px;
-            background: #7B8CDE;
-            color: white;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 100;
-            transition: all 0.3s ease;
-        }
-        .sync-btn.syncing {
-            background: #F59E0B;
-            animation: pulse 1s infinite;
-        }
-        .sync-btn.success { background: #10B981; }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        .offline-badge {
-            position: fixed;
-            top: 70px;
-            right: 16px;
-            background: #EF4444;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 10px;
-            z-index: 100;
-        }
-        .switch {
-            position: relative;
+            background: var(--primary-light); color: var(--primary);
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700;
             display: inline-block;
-            width: 46px;
-            height: 22px;
-            margin-right: 10px;
         }
+        .badge-gray { background: var(--bg); color: var(--text-muted); }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; gap: 8px;
+        }
+        .page-title { font-size: 18px; font-weight: 800; }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex; gap: 8px; flex-wrap: wrap;
+            margin-bottom: 12px; align-items: center;
+        }
+        .filter-bar select { width: auto; font-size: 12px; padding: 8px 12px; }
+        .filter-bar .input { font-size: 13px; }
+
+        /* ===== SWITCH ===== */
+        .switch { position: relative; display: inline-block; width: 42px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
+            position: absolute; cursor: pointer;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc;
-            border-radius: 22px;
-            transition: 0.2s;
+            background: #CBD5E1; border-radius: 24px; transition: 0.2s;
         }
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            border-radius: 50%;
-            transition: 0.2s;
+            position: absolute; content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background: white; border-radius: 50%; transition: 0.2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
         }
-        input:checked + .slider { background-color: #7B8CDE; }
-        input:checked + .slider:before { transform: translateX(24px); }
-        
-        .sync-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: #64748B;
-            background: #F1F5F9;
-            padding: 4px 10px;
-            border-radius: 20px;
+        input:checked + .slider { background: var(--primary); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        /* ===== PROFIT ===== */
+        .profit-positive { color: var(--success); font-weight: 700; }
+        .profit-negative { color: var(--danger); font-weight: 700; }
+
+        /* ===== SYNC FLOAT BTN ===== */
+        .sync-fab {
+            position: fixed; bottom: calc(var(--nav-h) + 12px); right: 14px;
+            background: var(--primary); color: white;
+            width: 44px; height: 44px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 4px 16px rgba(108,92,231,0.35);
+            z-index: 98; transition: all 0.3s; border: none;
         }
-        .sync-status.syncing { color: #F59E0B; }
-        .sync-status.success { color: #10B981; }
-        
-        .swal2-popup {
-            max-width: 95vw !important;
-            width: auto !important;
-            padding: 1rem !important;
+        .sync-fab.syncing { background: var(--warning); animation: pulse 1s infinite; }
+        .sync-fab.success { background: var(--success); }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+        .offline-badge {
+            position: fixed; top: calc(var(--header-h) + 6px); right: 12px;
+            background: var(--danger); color: white;
+            padding: 4px 10px; border-radius: 20px; font-size: 11px; z-index: 100;
+            font-weight: 700;
         }
-        .swal2-html-container {
-            overflow-x: hidden !important;
-            max-height: 70vh;
-            overflow-y: auto;
+
+        /* ===== ANALYTICS ===== */
+        .date-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .date-row .input { width: auto; flex: 1; min-width: 120px; }
+        .period-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .stat-row:last-child { border-bottom: none; }
+        .sales-group { margin-bottom: 14px; padding-left: 10px; border-left: 3px solid var(--primary); }
+        .sales-group-title { font-weight: 800; font-size: 13px; margin-bottom: 6px; }
+        .sales-item { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; border-bottom: 1px dashed var(--border); }
+        .sales-item:last-child { border: none; }
+
+        /* ===== USER ROW ===== */
+        .user-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid var(--border); gap: 8px;
         }
+        .user-row:last-child { border-bottom: none; }
+        .user-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 640px) {
+            .container { padding-left: 10px; padding-right: 10px; }
+            .login-card { padding: 28px 20px; }
+        }
+
+        /* ===== SWAL OVERRIDES ===== */
+        .swal2-popup { font-family: 'Nunito', sans-serif !important; border-radius: 20px !important; max-width: 95vw !important; }
+        .swal2-title { font-family: 'Nunito', sans-serif !important; font-weight: 800 !important; font-size: 18px !important; }
+        .swal2-html-container { overflow-x: hidden !important; max-height: 65vh; overflow-y: auto; }
         .swal2-input, .swal2-select {
-            width: 100% !important;
-            max-width: 100% !important;
-            box-sizing: border-box !important;
-            margin: 8px 0 !important;
+            width: 100% !important; max-width: 100% !important;
+            box-sizing: border-box !important; margin: 6px 0 !important;
+            border-radius: 12px !important; font-family: 'Nunito', sans-serif !important;
+            font-size: 14px !important; border: 1.5px solid var(--border) !important;
         }
-        
-        .form-label {
-            font-size: 13px;
-            font-weight: 500;
-            color: #1E293B;
-            margin-top: 8px;
-            margin-bottom: 4px;
-            display: block;
-            text-align: left;
-        }
-        .form-label:first-of-type {
-            margin-top: 0;
-        }
-        
-        .sales-category-group {
-            margin-bottom: 16px;
-            border-left: 3px solid #7B8CDE;
-            padding-left: 12px;
-        }
-        .sales-category-title {
-            font-weight: 600;
-            font-size: 14px;
-            color: #1E293B;
-            margin-bottom: 8px;
-        }
-        .sales-item-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 0;
-            border-bottom: 1px dashed #EDF2F7;
-        }
-        .sales-item-name {
-            font-size: 13px;
-        }
-        .sales-item-quantity {
-            font-weight: 600;
-            color: #7B8CDE;
-        }
-        
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            margin-bottom: 12px;
-        }
-        .input-group label {
-            font-size: 13px;
-            font-weight: 500;
-            color: #1E293B;
-        }
+        .swal2-confirm { border-radius: 30px !important; font-family: 'Nunito', sans-serif !important; font-weight: 700 !important; }
+        .swal2-cancel { border-radius: 30px !important; font-family: 'Nunito', sans-serif !important; font-weight: 700 !important; }
+        .input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; text-align: left; }
+        .input-group label { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 400px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        /* Registration flow */
+        .reg-hint { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 14px; }
+        .tab-btns { display: flex; gap: 6px; margin-bottom: 20px; background: var(--bg); border-radius: 14px; padding: 4px; }
+        .tab-btn { flex: 1; padding: 9px; border: none; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; background: transparent; color: var(--text-muted); transition: all 0.2s; }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
     </style>
 </head>
 <body>
 <div id="app" v-cloak>
+
+    <!-- HEADER -->
     <div class="app-header" v-if="user">
-        <div class="role-badge"><i class="fas fa-cloud"></i> {{ user.role === 'admin' ? 'Администратор' : 'Бариста' }} | {{ user.phone }}</div>
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="role-badge" :class="isSuperAdmin ? 'superadmin' : ''">
+            <i class="fas fa-cloud"></i>
+            {{ isSuperAdmin ? '⭐ Супер-адм' : (user.role === 'admin' ? 'Администратор' : 'Бариста') }}
+            | {{ user.name }}
+        </div>
+        <div class="header-right">
             <div class="sync-status" :class="syncStatusClass">
                 <i :class="syncStatusIcon"></i>
                 <span>{{ syncStatusText }}</span>
             </div>
-            <button class="logout-btn" @click="logout"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+            <button class="logout-btn" @click="logout"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </div>
-    <div v-if="offline" class="offline-badge"><i class="fas fa-wifi-slash"></i> Офлайн режим</div>
-    <div @click="forceSync" class="sync-btn" :class="syncButtonClass">
+
+    <div v-if="offline" class="offline-badge"><i class="fas fa-wifi-slash"></i> Офлайн</div>
+
+    <button @click="forceSync" class="sync-fab" :class="syncButtonClass">
         <i :class="syncButtonIcon"></i>
-    </div>
+    </button>
 
     <div class="container">
-        <div v-if="!user" class="card" style="max-width: 480px; margin: 80px auto;">
-            <h2 style="margin-bottom: 20px;">☕ Кофейня Тучка ☁️</h2>
-            <input type="text" v-model="loginPhone" @keyup.enter="handleLogin" placeholder="Телефон (+7, 8 или 9...)" class="input" style="margin-bottom: 12px;">
-            <input type="password" v-model="loginPass" @keyup.enter="handleLogin" placeholder="Пароль" class="input" style="margin-bottom: 20px;">
-            <button @click="handleLogin" class="btn btn-primary" style="width:100%">Войти</button>
-            <p style="margin-top: 20px; font-size: 12px; text-align:center;">Демо: admin / +79991234567 (123) | barista / +79876543210 (123)</p>
+
+        <!-- LOGIN / REGISTER -->
+        <div v-if="!user" class="login-wrap">
+            <div class="login-card">
+                <div class="login-logo">☕</div>
+                <div class="login-title">Кофейня Тучка</div>
+                <div class="login-subtitle">Складской учёт</div>
+
+                <div class="tab-btns">
+                    <button class="tab-btn" :class="{active: authMode==='login'}" @click="authMode='login'">Вход</button>
+                    <button class="tab-btn" :class="{active: authMode==='register'}" @click="authMode='register'">Регистрация</button>
+                </div>
+
+                <!-- LOGIN -->
+                <div v-if="authMode==='login'">
+                    <input type="text" v-model="loginPhone" @keyup.enter="handleLogin" placeholder="Телефон (+7, 8 или 9...)" class="input" style="margin-bottom:10px;">
+                    <input type="password" v-model="loginPass" @keyup.enter="handleLogin" placeholder="Пароль" class="input" style="margin-bottom:16px;">
+                    <button @click="handleLogin" class="btn btn-primary">Войти</button>
+                </div>
+
+                <!-- REGISTER -->
+                <div v-if="authMode==='register'">
+                    <input type="text" v-model="regPhone" placeholder="Телефон" class="input" style="margin-bottom:10px;">
+                    <input type="password" v-model="regPass" placeholder="Придумайте пароль" class="input" style="margin-bottom:10px;">
+                    <input type="password" v-model="regPass2" placeholder="Повторите пароль" class="input" style="margin-bottom:16px;">
+                    <button @click="handleRegister" class="btn btn-primary">Зарегистрироваться</button>
+                    <div class="reg-hint">Номер телефона должен быть добавлен администратором</div>
+                </div>
+            </div>
         </div>
 
         <div v-else>
-            <!-- Склад -->
-            <div v-show="activeTab === 'stock'">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                    <h3>📦 Склад</h3>
-                    <button v-if="user.role === 'admin'" @click="openItemModal(null)" class="btn btn-primary"><i class="fas fa-plus"></i> Товар</button>
+
+            <!-- СКЛАД -->
+            <div v-show="activeTab==='stock'">
+                <div class="page-header">
+                    <span class="page-title">📦 Склад</span>
+                    <button v-if="user.role==='admin'" @click="openItemModal(null)" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Товар</button>
                 </div>
                 <div class="card">
                     <div class="filter-bar">
-                        <select v-model="filterCategory" class="badge" style="width:auto;"><option value="">Все разделы</option><option v-for="cat in categories" :value="cat">{{ cat }}</option></select>
-                        <input type="text" v-model="searchStock" placeholder="Поиск..." class="input" style="width:200px; padding:10px;">
+                        <select v-model="filterCategory" style="width:auto;border-radius:10px;padding:8px 10px;font-size:12px;border:1.5px solid var(--border);background:var(--bg);font-family:inherit;font-weight:600;">
+                            <option value="">Все разделы</option>
+                            <option v-for="cat in categories" :value="cat">{{ cat }}</option>
+                        </select>
+                        <input type="text" v-model="searchStock" placeholder="Поиск..." class="input" style="flex:1;min-width:120px;">
                     </div>
-                    <div v-for="item in filteredStock" :key="item.id" class="inventory-row">
-                        <div>
-                            <strong>{{ item.name }}</strong> 
-                            <span class="badge">{{ item.category }}</span>
-                            <br>
-                            <small>{{ item.unit }} | 💰 {{ formatNumber(item.cost) }}₽ | 🏷️ {{ formatNumber(item.sellPrice || item.cost) }}₽</small>
+                    <div v-if="filteredStock.length === 0" style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Нет товаров</div>
+                    <div v-for="item in filteredStock" :key="item.id" class="row">
+                        <div class="row-left">
+                            <div class="item-name">{{ item.name }} <span class="badge" style="font-size:10px;">{{ item.category }}</span></div>
+                            <div class="item-meta">{{ item.unit }} · себест. {{ formatNumber(item.cost) }} ₽</div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span style="font-weight:700;">{{ formatNumber(item.quantity) }} {{ item.unit }}</span>
-                            <button v-if="user.role === 'admin'" @click="openItemModal(item)" class="btn" style="padding:5px 10px;"><i class="fas fa-edit"></i></button>
-                            <button @click="openIncomeModal(item)" class="btn btn-primary" style="padding:5px 10px;"><i class="fas fa-truck"></i> Приход</button>
-                            <button @click="openDamageModal(item)" class="btn btn-danger" style="padding:5px 10px;" v-if="user.role === 'admin'"><i class="fas fa-trash-alt"></i> Списание</button>
+                        <div class="row-right">
+                            <span class="qty-badge">{{ formatNumber(item.quantity) }} {{ item.unit }}</span>
+                            <button v-if="user.role==='admin'" @click="openItemModal(item)" class="btn btn-icon btn-sm"><i class="fas fa-edit"></i></button>
+                            <button @click="openIncomeModal(item)" class="btn btn-primary btn-sm"><i class="fas fa-truck"></i></button>
+                            <button v-if="user.role==='admin'" @click="openDamageModal(item)" class="btn btn-danger btn-sm"><i class="fas fa-minus-circle"></i></button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Техкарты -->
-            <div v-show="activeTab === 'techcards'">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                    <h3>📋 Техкарты</h3>
-                    <div style="display: flex; gap: 8px;">
-                        <button v-if="user.role === 'admin'" @click="openTechCardModal(null)" class="btn btn-primary"><i class="fas fa-plus"></i> Карта</button>
-                        <button @click="openSaleByRecipeModal" class="btn btn-success"><i class="fas fa-coffee"></i> Продажа</button>
+            <!-- ТЕХКАРТЫ -->
+            <div v-show="activeTab==='techcards'">
+                <div class="page-header">
+                    <span class="page-title">📋 Рецепты</span>
+                    <div style="display:flex;gap:6px;">
+                        <button v-if="user.role==='admin'" @click="openTechCardModal(null)" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i></button>
+                        <button @click="openSaleByRecipeModal" class="btn btn-success btn-sm"><i class="fas fa-cash-register"></i> Продажа</button>
                     </div>
                 </div>
+                <div v-if="techCards.length===0" class="card" style="text-align:center;color:var(--text-muted);padding:30px;">Нет техкарт</div>
                 <div class="card" v-for="card in techCards" :key="card.id">
-                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
-                        <h4>{{ card.name }}</h4>
-                        <div>
-                            <button @click="sellRecipe(card)" class="btn btn-success" style="padding:4px 12px;"><i class="fas fa-shopping-cart"></i> Продать</button>
-                            <button v-if="user.role === 'admin'" @click="openTechCardModal(card)" class="btn" style="padding:4px 12px;">✏️</button>
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">
+                        <div style="font-weight:800;font-size:15px;">{{ card.name }}</div>
+                        <div style="display:flex;gap:6px;">
+                            <button @click="sellRecipe(card)" class="btn btn-success btn-sm"><i class="fas fa-shopping-cart"></i></button>
+                            <button v-if="user.role==='admin'" @click="openTechCardModal(card)" class="btn btn-sm"><i class="fas fa-edit"></i></button>
                         </div>
                     </div>
-                    <ul style="margin-left: 20px; margin-top: 8px;">
-                        <li v-for="ing in card.ingredients">{{ ing.itemName }}: {{ ing.qty }} {{ ing.unit }}</li>
-                    </ul>
-                    <div><strong>Себестоимость: ≈ {{ formatNumber(calculateCardCost(card)) }} ₽ | Продажа: {{ formatNumber(card.sellPrice || 0) }} ₽</strong></div>
-                    <div v-if="card.sellPrice" :class="(card.sellPrice - calculateCardCost(card)) > 0 ? 'profit-positive' : 'profit-negative'">
-                        Прибыль: {{ formatNumber(card.sellPrice - calculateCardCost(card)) }} ₽
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">
+                        <span v-for="(ing,i) in card.ingredients" :key="i">{{ ing.itemName }} {{ ing.qty }}{{ ing.unit }}<span v-if="i<card.ingredients.length-1"> · </span></span>
+                    </div>
+                    <div style="display:flex;gap:16px;font-size:13px;">
+                        <span>Себест: <strong>{{ formatNumber(calculateCardCost(card)) }} ₽</strong></span>
+                        <span>Цена: <strong>{{ formatNumber(card.sellPrice||0) }} ₽</strong></span>
+                        <span :class="(card.sellPrice-calculateCardCost(card))>0?'profit-positive':'profit-negative'">
+                            Прибыль: {{ formatNumber((card.sellPrice||0)-calculateCardCost(card)) }} ₽
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Инвентаризация -->
-            <div v-show="activeTab === 'inventory'">
-                <h3>📊 Инвентаризация</h3>
+            <!-- ИНВЕНТАРИЗАЦИЯ -->
+            <div v-show="activeTab==='inventory'">
+                <div class="page-header"><span class="page-title">📊 Инвентаризация</span></div>
                 <div class="card">
                     <div v-if="!activeInventory">
-                        <button @click="startInventory" class="btn btn-primary"><i class="fas fa-clipboard-list"></i> Начать инвентаризацию</button>
+                        <button @click="startInventory" class="btn btn-primary"><i class="fas fa-clipboard-list"></i> Начать</button>
                     </div>
                     <div v-else>
-                        <h4>Инвентаризация от {{ new Date(activeInventory.startedAt).toLocaleString() }}</h4>
-                        <div v-for="item in stockItems" :key="item.id" class="inventory-row">
-                            <span>{{ item.name }} ({{ item.unit }}) — текущий: {{ formatNumber(item.quantity) }}</span>
-                            <input type="number" step="0.01" v-model.number="inventoryCounts[item.id]" placeholder="Факт" class="input" style="width:120px;">
+                        <div style="font-weight:700;margin-bottom:12px;font-size:13px;">Начата: {{ new Date(activeInventory.startedAt).toLocaleString() }}</div>
+                        <div v-for="item in stockItems" :key="item.id" class="row">
+                            <div class="row-left">
+                                <div class="item-name">{{ item.name }}</div>
+                                <div class="item-meta">По данным: {{ formatNumber(item.quantity) }} {{ item.unit }}</div>
+                            </div>
+                            <input type="number" step="0.01" v-model.number="inventoryCounts[item.id]" placeholder="Факт" class="input" style="width:100px;">
                         </div>
-                        <div style="margin-top:20px; display: flex; gap:12px;">
+                        <div style="display:flex;gap:8px;margin-top:14px;">
                             <button @click="completeInventory" class="btn btn-primary">Завершить</button>
                             <button @click="cancelInventory" class="btn">Отмена</button>
                         </div>
                     </div>
                 </div>
                 <div class="card" v-if="inventoryReports.length">
-                    <h4>История инвентаризаций</h4>
-                    <div v-for="rep in inventoryReports" :key="rep.id" class="inventory-row">
-                        <div>{{ new Date(rep.createdAt).toLocaleString() }} <span class="badge">{{ rep.status }}</span></div>
-                        <button @click="viewInventoryReport(rep)" class="btn">Детали</button>
+                    <div class="card-title">📋 История</div>
+                    <div v-for="rep in inventoryReports" :key="rep.id" class="row">
+                        <div class="row-left">
+                            <div class="item-name">{{ new Date(rep.createdAt).toLocaleDateString() }}</div>
+                            <div class="item-meta"><span class="badge badge-gray">{{ rep.status }}</span></div>
+                        </div>
+                        <button @click="viewInventoryReport(rep)" class="btn btn-sm">Детали</button>
                     </div>
                 </div>
             </div>
 
-            <!-- История поставок -->
-            <div v-show="activeTab === 'supplies'">
-                <h3>🚚 История поставок</h3>
+            <!-- ПОСТАВКИ -->
+            <div v-show="activeTab==='supplies'">
+                <div class="page-header"><span class="page-title">🚚 Поставки</span></div>
                 <div class="card">
                     <div class="filter-bar">
-                        <input type="text" v-model="supplySearch" placeholder="Поиск" class="input" style="width:200px;">
+                        <input type="text" v-model="supplySearch" placeholder="Поиск..." class="input">
                     </div>
-                    <div v-for="log in filteredSupplies" :key="log.id" class="inventory-row">
-                        <div><strong>{{ log.itemName }}</strong><br><small>{{ new Date(log.date).toLocaleString() }}</small></div>
-                        <div>+ {{ log.quantity }} {{ log.unit }} | {{ formatNumber(log.quantity * log.costPerUnit) }}₽</div>
+                    <div v-if="filteredSupplies.length===0" style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Нет поставок</div>
+                    <div v-for="log in filteredSupplies" :key="log.id" class="row">
+                        <div class="row-left">
+                            <div class="item-name">{{ log.itemName }}</div>
+                            <div class="item-meta">{{ new Date(log.date).toLocaleString() }}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="qty-badge">+{{ formatNumber(log.quantity) }} {{ log.unit }}</div>
+                            <div style="font-size:12px;color:var(--text-muted);">{{ formatNumber(log.quantity * log.costPerUnit) }} ₽ · {{ formatNumber(log.costPerUnit) }}₽/{{ log.unit }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Аналитика -->
-            <div v-show="activeTab === 'analytics'">
-                <h3>📈 Аналитика</h3>
+            <!-- АНАЛИТИКА -->
+            <div v-show="activeTab==='analytics'">
+                <div class="page-header"><span class="page-title">📈 Аналитика</span></div>
                 <div class="card">
-                    <div class="date-range">
-                        <input type="date" v-model="analyticsStartDate" class="input" style="width:auto;">
-                        <span>—</span>
-                        <input type="date" v-model="analyticsEndDate" class="input" style="width:auto;">
-                        <button @click="generateAnalytics" class="btn btn-primary">Рассчитать</button>
-                        <button @click="setAnalyticsPeriod('day')" class="btn">День</button>
-                        <button @click="setAnalyticsPeriod('week')" class="btn">Неделя</button>
-                        <button @click="setAnalyticsPeriod('month')" class="btn">Месяц</button>
+                    <div class="date-row">
+                        <input type="date" v-model="analyticsStartDate" class="input">
+                        <span style="color:var(--text-muted);">—</span>
+                        <input type="date" v-model="analyticsEndDate" class="input">
+                        <button @click="generateAnalytics" class="btn btn-primary btn-sm">Считать</button>
+                    </div>
+                    <div class="period-btns">
+                        <button @click="setAnalyticsPeriod('day')" class="btn btn-sm">День</button>
+                        <button @click="setAnalyticsPeriod('week')" class="btn btn-sm">Неделя</button>
+                        <button @click="setAnalyticsPeriod('month')" class="btn btn-sm">Месяц</button>
                     </div>
                 </div>
-                
                 <div class="card" v-if="profitReport">
-                    <h4>💰 Финансовый отчет</h4>
-                    <div class="inventory-row">
-                        <span>Выручка:</span>
-                        <span class="profit-positive">{{ formatNumber(profitReport.revenue) }} ₽</span>
-                    </div>
-                    <div class="inventory-row">
-                        <span>Себестоимость:</span>
-                        <span>{{ formatNumber(profitReport.cost) }} ₽</span>
-                    </div>
-                    <div class="inventory-row">
-                        <span>Валовая прибыль:</span>
-                        <span :class="profitReport.profit > 0 ? 'profit-positive' : 'profit-negative'">{{ formatNumber(profitReport.profit) }} ₽</span>
-                    </div>
-                    <div class="inventory-row">
-                        <span>Списано (порча):</span>
-                        <span class="profit-negative">{{ formatNumber(profitReport.damageCost) }} ₽</span>
-                    </div>
+                    <div class="card-title">💰 Финансы</div>
+                    <div class="stat-row"><span>Выручка</span><span class="profit-positive">{{ formatNumber(profitReport.revenue) }} ₽</span></div>
+                    <div class="stat-row"><span>Себестоимость (ср.)</span><span>{{ formatNumber(profitReport.cost) }} ₽</span></div>
+                    <div class="stat-row"><span>Валовая прибыль</span><span :class="profitReport.profit>0?'profit-positive':'profit-negative'">{{ formatNumber(profitReport.profit) }} ₽</span></div>
+                    <div class="stat-row"><span>Списано (порча)</span><span class="profit-negative">{{ formatNumber(profitReport.damageCost) }} ₽</span></div>
+                    <div class="stat-row" style="font-weight:800;"><span>Чистая прибыль</span><span :class="(profitReport.profit-profitReport.damageCost)>0?'profit-positive':'profit-negative'">{{ formatNumber(profitReport.profit - profitReport.damageCost) }} ₽</span></div>
                 </div>
-                
                 <div class="card" v-if="salesByCategory.length">
-                    <h4>📊 Продажи за период</h4>
-                    <div v-for="category in salesByCategory" :key="category.name" class="sales-category-group">
-                        <div class="sales-category-title">{{ category.name }}:</div>
-                        <div v-for="item in category.items" :key="item.name" class="sales-item-row">
-                            <span class="sales-item-name">{{ item.name }}</span>
-                            <span class="sales-item-quantity">{{ formatNumber(item.quantity) }} {{ item.unit }}</span>
+                    <div class="card-title">📊 Расход ингредиентов</div>
+                    <div v-for="cat in salesByCategory" :key="cat.name" class="sales-group">
+                        <div class="sales-group-title">{{ cat.name }}</div>
+                        <div v-for="item in cat.items" :key="item.name" class="sales-item">
+                            <span>{{ item.name }}</span>
+                            <span style="font-weight:700;color:var(--primary);">{{ formatNumber(item.quantity) }} {{ item.unit }}</span>
                         </div>
                     </div>
                 </div>
-                <div v-else-if="analyticsGenerated && !salesByCategory.length" class="card">
-                    <p style="text-align:center; color:#64748B;">Нет продаж за выбранный период</p>
-                </div>
+                <div v-else-if="analyticsGenerated" class="card" style="text-align:center;color:var(--text-muted);padding:24px;">Нет продаж за период</div>
             </div>
 
-            <!-- Админка -->
-            <div v-show="activeTab === 'settings' && user.role === 'admin'">
-                <h3>⚙️ Администрирование</h3>
-                
+            <!-- АДМИН -->
+            <div v-show="activeTab==='settings' && user.role==='admin'">
+                <div class="page-header"><span class="page-title">⚙️ Администрирование</span></div>
+
+                <!-- Пользователи -->
                 <div class="card">
-                    <h4>👥 Пользователи</h4>
-                    <button @click="openUserModal(null)" class="btn btn-primary" style="margin-bottom: 12px;">+ Добавить</button>
-                    <div v-for="u in usersList" :key="u.id" class="inventory-row">
-                        <div>
-                            <strong>{{ u.name }}</strong><br>
-                            <small>{{ u.phone }} | {{ u.role }}</small>
+                    <div class="card-title" style="justify-content:space-between;">
+                        <span>👥 Пользователи</span>
+                        <button @click="openUserModal(null)" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Добавить</button>
+                    </div>
+                    <div v-for="u in usersList" :key="u.id" class="user-row">
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:700;font-size:14px;">
+                                {{ u.name }}
+                                <span v-if="u.id===superAdminId" style="font-size:11px;color:var(--primary);">⭐</span>
+                            </div>
+                            <div style="font-size:12px;color:var(--text-muted);">{{ u.phone }} · {{ u.role === 'admin' ? 'Администратор' : 'Бариста' }}</div>
+                            <div v-if="isSuperAdmin" style="font-size:11px;color:var(--text-muted);margin-top:2px;">🔑 {{ u.password }}</div>
+                            <div v-if="u.deviceId" style="font-size:10px;color:var(--text-muted);">📱 Устройство привязано</div>
                         </div>
-                        <div style="display: flex; align-items: center;">
+                        <div class="user-actions">
                             <label class="switch">
                                 <input type="checkbox" v-model="u.isActive" @change="toggleUserActive(u)">
                                 <span class="slider"></span>
                             </label>
-                            <button @click="deleteUser(u)" class="btn btn-danger" style="padding: 5px 10px;">🗑️</button>
+                            <button v-if="u.deviceId && isSuperAdmin" @click="resetDevice(u)" class="btn btn-sm" title="Сбросить устройство"><i class="fas fa-mobile-alt"></i> ↺</button>
+                            <button @click="openUserModal(u)" class="btn btn-sm btn-icon"><i class="fas fa-edit"></i></button>
+                            <button @click="deleteUser(u)" class="btn btn-danger btn-sm btn-icon" v-if="canDeleteUser(u)"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h4>📂 Разделы товаров</h4>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-                        <span v-for="cat in categories" class="badge">{{ cat }} <i @click="removeCategory(cat)" class="fas fa-times-circle" style="cursor:pointer;"></i></span>
+                <!-- Причины списания -->
+                <div class="card" v-if="isSuperAdmin || user.role==='admin'">
+                    <div class="card-title" style="justify-content:space-between;">
+                        <span>⚠️ Причины списания</span>
                     </div>
-                    <div style="display:flex; gap:8px;"><input v-model="newCategory" placeholder="Новый раздел" class="input"><button @click="addCategory" class="btn btn-primary">Добавить</button></div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                        <span v-for="r in damageReasons" :key="r" class="badge badge-gray" style="display:inline-flex;align-items:center;gap:4px;">
+                            {{ r }} <i @click="removeDamageReason(r)" class="fas fa-times" style="cursor:pointer;font-size:10px;"></i>
+                        </span>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <input v-model="newDamageReason" placeholder="Новая причина" class="input">
+                        <button @click="addDamageReason" class="btn btn-primary">+</button>
+                    </div>
                 </div>
 
+                <!-- Разделы -->
                 <div class="card">
-                    <h4>💾 Резервное копирование</h4>
-                    <button @click="exportData" class="btn"><i class="fas fa-download"></i> Экспорт JSON</button>
-                    <input type="file" @change="importData" accept=".json" style="margin-top:10px;">
+                    <div class="card-title">📂 Разделы товаров</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                        <span v-for="cat in categories" :key="cat" class="badge" style="display:inline-flex;align-items:center;gap:4px;">
+                            {{ cat }} <i @click="removeCategory(cat)" class="fas fa-times" style="cursor:pointer;font-size:10px;"></i>
+                        </span>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <input v-model="newCategory" placeholder="Новый раздел" class="input">
+                        <button @click="addCategory" class="btn btn-primary">+</button>
+                    </div>
+                </div>
+
+                <!-- Резервное копирование -->
+                <div class="card">
+                    <div class="card-title">💾 Резервное копирование</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <button @click="exportData" class="btn"><i class="fas fa-download"></i> Экспорт</button>
+                        <label class="btn" style="cursor:pointer;"><i class="fas fa-upload"></i> Импорт<input type="file" @change="importData" accept=".json" style="display:none;"></label>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
 
+    <!-- BOTTOM NAV -->
     <div class="bottom-nav-wrapper" v-if="user">
         <div class="bottom-nav">
-            <button class="nav-item" :class="{active: activeTab==='stock'}" @click="activeTab='stock'"><i class="fas fa-boxes"></i><span>Склад</span></button>
-            <button class="nav-item" :class="{active: activeTab==='techcards'}" @click="activeTab='techcards'"><i class="fas fa-mug-hot"></i><span>Рецепты</span></button>
-            <button class="nav-item" :class="{active: activeTab==='inventory'}" @click="activeTab='inventory'"><i class="fas fa-clipboard-list"></i><span>Инвент</span></button>
-            <button class="nav-item" :class="{active: activeTab==='supplies'}" @click="activeTab='supplies'"><i class="fas fa-history"></i><span>Поставки</span></button>
-            <button class="nav-item" :class="{active: activeTab==='analytics'}" @click="activeTab='analytics'"><i class="fas fa-chart-line"></i><span>Аналитика</span></button>
-            <button v-if="user.role === 'admin'" class="nav-item" :class="{active: activeTab==='settings'}" @click="activeTab='settings'"><i class="fas fa-cog"></i><span>Админ</span></button>
+            <button class="nav-item" :class="{active:activeTab==='stock'}" @click="activeTab='stock'"><i class="fas fa-boxes"></i><span>Склад</span></button>
+            <button class="nav-item" :class="{active:activeTab==='techcards'}" @click="activeTab='techcards'"><i class="fas fa-mug-hot"></i><span>Рецепты</span></button>
+            <button class="nav-item" :class="{active:activeTab==='inventory'}" @click="activeTab='inventory'"><i class="fas fa-clipboard-list"></i><span>Инвент</span></button>
+            <button class="nav-item" :class="{active:activeTab==='supplies'}" @click="activeTab='supplies'"><i class="fas fa-history"></i><span>Поставки</span></button>
+            <button class="nav-item" :class="{active:activeTab==='analytics'}" @click="activeTab='analytics'"><i class="fas fa-chart-line"></i><span>Аналитика</span></button>
+            <button v-if="user.role==='admin'" class="nav-item" :class="{active:activeTab==='settings'}" @click="activeTab='settings'"><i class="fas fa-cog"></i><span>Админ</span></button>
         </div>
     </div>
 </div>
 
-<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-<!-- Токен загружается из config.js, который генерируется GitHub Actions -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="config.js"></script>
 <script>
-    const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted } = Vue;
 
-    // ============== НАСТРОЙКИ GITHUB ==============
-    // GITHUB_TOKEN берётся из config.js (не хранится в репозитории)
-    const REPO_OWNER = 'spoiler038';
-    const REPO_NAME = 'Coffee';
-    const BRANCH = 'main';
-    // ==============================================
+const REPO_OWNER = 'spoiler038';
+const REPO_NAME = 'Coffee';
+const BRANCH = 'main';
+// ID супер-администратора (ваш id из users.json)
+const SUPER_ADMIN_ID = 'u1';
 
-    function formatNumber(value) {
-        if (value === undefined || value === null) return '0';
-        const num = parseFloat(value);
-        if (isNaN(num)) return '0';
-        return Math.round(num * 10) / 10;
+function formatNumber(v) {
+    if (v === undefined || v === null || isNaN(parseFloat(v))) return '0';
+    return Math.round(parseFloat(v) * 100) / 100;
+}
+
+function normalizePhone(phone) {
+    let c = phone.replace(/[^\d]/g, '');
+    if (c.startsWith('8') && c.length === 11) c = '7' + c.slice(1);
+    else if (c.length === 10 && c.startsWith('9')) c = '7' + c;
+    else if (c.startsWith('7') && c.length === 11) { /* ok */ }
+    return c;
+}
+
+function getDeviceId() {
+    let id = localStorage.getItem('tuchka_device_id');
+    if (!id) {
+        id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('tuchka_device_id', id);
     }
+    return id;
+}
 
-    const syncState = ref('idle');
-    let syncTimeout = null;
+const syncState = ref('idle');
 
-    class GitHubDB {
-        constructor() {
-            this.apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data`;
-            this.headers = {
-                'Authorization': `token ${GITHUB_TOKEN}`,
-                'Accept': 'application/vnd.github.v3+json'
-            };
-            this.pendingWrites = new Map();
-            this.writeTimeout = null;
-        }
-
-        async getFile(filename) {
-            try {
-                // Для публичного репозитория читаем через raw URL — токен не нужен
-                const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/data/${filename}`;
-                const response = await fetch(rawUrl);
-                if (response.status === 404) return [];
-                const text = await response.text();
-                return JSON.parse(text);
-            } catch (error) {
-                console.error(`Ошибка загрузки ${filename}:`, error);
-                return [];
-            }
-        }
-
-        async saveFile(filename, data, isSilent = false) {
-            try {
-                let sha = null;
-                const getResponse = await fetch(`${this.apiUrl}/${filename}`, {
-                    headers: this.headers
-                });
-                if (getResponse.status === 200) {
-                    const fileData = await getResponse.json();
-                    sha = fileData.sha;
-                }
-                const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-                await fetch(`${this.apiUrl}/${filename}`, {
-                    method: 'PUT',
-                    headers: {
-                        ...this.headers,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: `Update ${filename}`,
-                        content: content,
-                        sha: sha,
-                        branch: BRANCH
-                    })
-                });
-                if (!isSilent) {
-                    updateSyncStatus('success');
-                    setTimeout(() => {
-                        if (syncState.value === 'success') syncState.value = 'idle';
-                    }, 2000);
-                }
-            } catch (error) {
-                console.error(`Ошибка сохранения ${filename}:`, error);
-                if (!isSilent) updateSyncStatus('error');
-                throw error;
-            }
-        }
-
-        scheduleSave(filename, data) {
-            this.pendingWrites.set(filename, data);
-            if (this.writeTimeout) clearTimeout(this.writeTimeout);
-            this.writeTimeout = setTimeout(async () => {
-                updateSyncStatus('syncing');
-                const writes = Array.from(this.pendingWrites.entries());
-                this.pendingWrites.clear();
-                try {
-                    for (const [filename, data] of writes) {
-                        await this.saveFile(filename, data, true);
-                    }
-                    updateSyncStatus('success');
-                    setTimeout(() => {
-                        if (syncState.value === 'success') syncState.value = 'idle';
-                    }, 2000);
-                } catch (error) {
-                    updateSyncStatus('error');
-                }
-            }, 1500);
-        }
+class GitHubDB {
+    constructor() {
+        this.apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data`;
+        this.headers = {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+        };
+        this.pendingWrites = new Map();
+        this.writeTimeout = null;
     }
-
-    const db = new GitHubDB();
-
-    function updateSyncStatus(status) {
-        syncState.value = status;
+    async getFile(filename) {
+        try {
+            const url = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/data/${filename}?t=${Date.now()}`;
+            const r = await fetch(url);
+            if (r.status === 404) return [];
+            const text = await r.text();
+            if (!text.trim()) return [];
+            return JSON.parse(text);
+        } catch(e) { console.error('getFile', filename, e); return []; }
     }
-
-    function normalizePhone(phone) {
-        let cleaned = phone.replace(/[^\d+]/g, '');
-        if (cleaned.startsWith('+7')) cleaned = cleaned.slice(2);
-        else if (cleaned.startsWith('8')) cleaned = cleaned.slice(1);
-        else if (cleaned.startsWith('7')) cleaned = cleaned.slice(1);
-        if (cleaned.length === 10 && /^9\d{9}$/.test(cleaned)) cleaned = '7' + cleaned;
-        else if (cleaned.length === 11 && cleaned.startsWith('7')) cleaned = cleaned;
-        else if (cleaned.length === 10 && /^\d{10}$/.test(cleaned)) cleaned = '7' + cleaned;
-        return cleaned;
-    }
-
-    createApp({
-        setup() {
-            const user = ref(null);
-            const loginPhone = ref('');
-            const loginPass = ref('');
-            const activeTab = ref('stock');
-            const stockItems = ref([]);
-            const categories = ref([]);
-            const techCards = ref([]);
-            const inventoryReports = ref([]);
-            const supplyHistory = ref([]);
-            const saleHistory = ref([]);
-            const damageHistory = ref([]);
-            const usersList = ref([]);
-            const filterCategory = ref('');
-            const searchStock = ref('');
-            const activeInventory = ref(null);
-            const inventoryCounts = ref({});
-            const newCategory = ref('');
-            const supplySearch = ref('');
-            const analyticsStartDate = ref(new Date(Date.now() - 7*86400000).toISOString().slice(0,10));
-            const analyticsEndDate = ref(new Date().toISOString().slice(0,10));
-            const profitReport = ref(null);
-            const salesByCategory = ref([]);
-            const analyticsGenerated = ref(false);
-            const offline = ref(!navigator.onLine);
-
-            async function refreshAll() {
-                try {
-                    stockItems.value = await db.getFile('stock.json');
-                    techCards.value = await db.getFile('techcards.json');
-                    supplyHistory.value = await db.getFile('supplies.json');
-                    saleHistory.value = await db.getFile('sales.json');
-                    inventoryReports.value = await db.getFile('inventory.json');
-                    damageHistory.value = await db.getFile('damage.json');
-                    
-                    const cats = new Set();
-                    stockItems.value.forEach(item => cats.add(item.category));
-                    categories.value = [...cats];
-                    
-                    const users = await db.getFile('users.json');
-                    if (users.length) usersList.value = users;
-                    else {
-                        usersList.value = [
-                            { id: 'u1', phone: '79991234567', password: '123', role: 'admin', name: 'Менеджер', isActive: true },
-                            { id: 'u2', phone: '79876543210', password: '123', role: 'barista', name: 'Бариста', isActive: true }
-                        ];
-                        await db.saveFile('users.json', usersList.value);
-                    }
-                } catch (error) {
-                    console.error('Refresh error:', error);
-                    offline.value = true;
-                }
-            }
-
-            async function saveStock() { await db.scheduleSave('stock.json', stockItems.value); }
-            async function saveTechCards() { await db.scheduleSave('techcards.json', techCards.value); }
-            async function saveSupply(supply) { supplyHistory.value.unshift(supply); await db.scheduleSave('supplies.json', supplyHistory.value); }
-            async function saveSale(sale) { saleHistory.value.unshift(sale); await db.scheduleSave('sales.json', saleHistory.value); }
-            async function saveDamage(damage) { damageHistory.value.unshift(damage); await db.scheduleSave('damage.json', damageHistory.value); }
-            async function saveInventory(report) { inventoryReports.value.unshift(report); await db.scheduleSave('inventory.json', inventoryReports.value); }
-            async function saveUsers() { await db.scheduleSave('users.json', usersList.value); }
-
-            const filteredStock = computed(() => stockItems.value.filter(i => (!filterCategory.value || i.category === filterCategory.value) && (!searchStock.value || i.name.toLowerCase().includes(searchStock.value.toLowerCase()))));
-            const filteredSupplies = computed(() => supplyHistory.value.filter(l => !supplySearch.value || l.itemName.toLowerCase().includes(supplySearch.value.toLowerCase())));
-
-            const syncStatusText = computed(() => {
-                switch(syncState.value) {
-                    case 'syncing': return 'Синхронизация...';
-                    case 'success': return 'Сохранено';
-                    case 'error': return 'Ошибка';
-                    default: return 'Все сохранено';
-                }
+    async saveFile(filename, data, silent=false) {
+        try {
+            const getR = await fetch(`${this.apiUrl}/${filename}`, { headers: this.headers });
+            let sha = null;
+            if (getR.status === 200) sha = (await getR.json()).sha;
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+            await fetch(`${this.apiUrl}/${filename}`, {
+                method: 'PUT',
+                headers: { ...this.headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `Update ${filename}`, content, sha, branch: BRANCH })
             });
-            const syncStatusIcon = computed(() => {
-                switch(syncState.value) {
-                    case 'syncing': return 'fas fa-spinner fa-pulse';
-                    case 'success': return 'fas fa-check-circle';
-                    case 'error': return 'fas fa-exclamation-circle';
-                    default: return 'fas fa-cloud-upload-alt';
-                }
-            });
-            const syncStatusClass = computed(() => syncState.value === 'syncing' ? 'syncing' : (syncState.value === 'success' ? 'success' : ''));
-            const syncButtonClass = computed(() => syncState.value === 'syncing' ? 'syncing' : (syncState.value === 'success' ? 'success' : ''));
-            const syncButtonIcon = computed(() => syncState.value === 'syncing' ? 'fas fa-spinner fa-pulse' : (syncState.value === 'success' ? 'fas fa-check' : 'fas fa-cloud-upload-alt'));
+            if (!silent) { syncState.value = 'success'; setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000); }
+        } catch(e) {
+            console.error('saveFile', filename, e);
+            if (!silent) syncState.value = 'error';
+        }
+    }
+    scheduleSave(filename, data) {
+        this.pendingWrites.set(filename, data);
+        if (this.writeTimeout) clearTimeout(this.writeTimeout);
+        this.writeTimeout = setTimeout(async () => {
+            syncState.value = 'syncing';
+            const writes = [...this.pendingWrites.entries()];
+            this.pendingWrites.clear();
+            try {
+                for (const [fn, d] of writes) await this.saveFile(fn, d, true);
+                syncState.value = 'success';
+                setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
+            } catch { syncState.value = 'error'; }
+        }, 1500);
+    }
+}
 
-            async function forceSync() {
-                if (syncState.value === 'syncing') return;
-                updateSyncStatus('syncing');
-                await saveStock();
-                await saveTechCards();
-                await db.scheduleSave('supplies.json', supplyHistory.value);
-                await db.scheduleSave('sales.json', saleHistory.value);
-                await db.scheduleSave('inventory.json', inventoryReports.value);
-                await db.scheduleSave('damage.json', damageHistory.value);
+const db = new GitHubDB();
+
+createApp({
+    setup() {
+        const user = ref(null);
+        const loginPhone = ref('');
+        const loginPass = ref('');
+        const authMode = ref('login');
+        const regPhone = ref('');
+        const regPass = ref('');
+        const regPass2 = ref('');
+        const activeTab = ref('stock');
+        const stockItems = ref([]);
+        const categories = ref([]);
+        const techCards = ref([]);
+        const inventoryReports = ref([]);
+        const supplyHistory = ref([]);
+        const saleHistory = ref([]);
+        const damageHistory = ref([]);
+        const usersList = ref([]);
+        const filterCategory = ref('');
+        const searchStock = ref('');
+        const activeInventory = ref(null);
+        const inventoryCounts = ref({});
+        const newCategory = ref('');
+        const supplySearch = ref('');
+        const analyticsStartDate = ref(new Date(Date.now()-7*86400000).toISOString().slice(0,10));
+        const analyticsEndDate = ref(new Date().toISOString().slice(0,10));
+        const profitReport = ref(null);
+        const salesByCategory = ref([]);
+        const analyticsGenerated = ref(false);
+        const offline = ref(!navigator.onLine);
+        const damageReasons = ref(['Порча', 'Бой', 'Истёк срок', 'Пересортица']);
+        const newDamageReason = ref('');
+        const superAdminId = ref(SUPER_ADMIN_ID);
+
+        const isSuperAdmin = computed(() => user.value?.id === SUPER_ADMIN_ID);
+        const canDeleteUser = (u) => {
+            if (u.id === SUPER_ADMIN_ID) return false; // нельзя удалить суперадмина
+            if (isSuperAdmin.value) return true; // суперадмин удаляет всех
+            if (user.value?.role === 'admin' && u.role === 'barista') return true; // admin удаляет баристу
+            return false;
+        };
+
+        const syncStatusText = computed(() => ({ syncing:'Синхронизация...', success:'Сохранено', error:'Ошибка', idle:'Всё сохранено' }[syncState.value]||''));
+        const syncStatusIcon = computed(() => ({ syncing:'fas fa-spinner fa-pulse', success:'fas fa-check-circle', error:'fas fa-exclamation-circle', idle:'fas fa-cloud' }[syncState.value]));
+        const syncStatusClass = computed(() => syncState.value === 'idle' ? '' : syncState.value);
+        const syncButtonClass = computed(() => syncState.value === 'idle' ? '' : syncState.value);
+        const syncButtonIcon = computed(() => syncState.value === 'syncing' ? 'fas fa-spinner fa-pulse' : (syncState.value === 'success' ? 'fas fa-check' : 'fas fa-cloud-upload-alt'));
+
+        const filteredStock = computed(() => stockItems.value.filter(i =>
+            (!filterCategory.value || i.category === filterCategory.value) &&
+            (!searchStock.value || i.name.toLowerCase().includes(searchStock.value.toLowerCase()))
+        ));
+        const filteredSupplies = computed(() => supplyHistory.value.filter(l =>
+            !supplySearch.value || l.itemName.toLowerCase().includes(supplySearch.value.toLowerCase())
+        ));
+
+        async function refreshAll() {
+            try {
+                const [stock, tc, sup, sal, inv, dmg, usr] = await Promise.all([
+                    db.getFile('stock.json'), db.getFile('techcards.json'),
+                    db.getFile('supplies.json'), db.getFile('sales.json'),
+                    db.getFile('inventory.json'), db.getFile('damage.json'),
+                    db.getFile('users.json')
+                ]);
+                stockItems.value = stock;
+                techCards.value = tc;
+                supplyHistory.value = sup;
+                saleHistory.value = sal;
+                inventoryReports.value = inv;
+                damageHistory.value = dmg;
+                const cats = new Set(); stock.forEach(i => cats.add(i.category));
+                categories.value = [...cats];
+                if (usr.length) usersList.value = usr;
+                else {
+                    usersList.value = [
+                        { id: 'u1', phone: '79778700833', password: '123Qq', role: 'admin', name: 'Артур', isActive: true }
+                    ];
+                    await db.saveFile('users.json', usersList.value);
+                }
+            } catch(e) { console.error('refreshAll', e); offline.value = true; }
+        }
+
+        const saveStock = () => db.scheduleSave('stock.json', stockItems.value);
+        const saveTechCards = () => db.scheduleSave('techcards.json', techCards.value);
+        const saveUsers = () => db.scheduleSave('users.json', usersList.value);
+        const saveSupply = (s) => { supplyHistory.value.unshift(s); db.scheduleSave('supplies.json', supplyHistory.value); };
+        const saveSale = (s) => { saleHistory.value.unshift(s); db.scheduleSave('sales.json', saleHistory.value); };
+        const saveDamage = (d) => { damageHistory.value.unshift(d); db.scheduleSave('damage.json', damageHistory.value); };
+        const saveInventory = (r) => { inventoryReports.value.unshift(r); db.scheduleSave('inventory.json', inventoryReports.value); };
+
+        async function forceSync() {
+            if (syncState.value === 'syncing') return;
+            syncState.value = 'syncing';
+            await Promise.all([
+                db.saveFile('stock.json', stockItems.value, true),
+                db.saveFile('techcards.json', techCards.value, true),
+                db.saveFile('supplies.json', supplyHistory.value, true),
+                db.saveFile('sales.json', saleHistory.value, true),
+                db.saveFile('inventory.json', inventoryReports.value, true),
+                db.saveFile('damage.json', damageHistory.value, true),
+                db.saveFile('users.json', usersList.value, true),
+            ]);
+            syncState.value = 'success';
+            setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
+        }
+
+        // Автологин
+        function tryAutoLogin() {
+            const saved = localStorage.getItem('tuchka_session');
+            if (!saved) return false;
+            try {
+                const sess = JSON.parse(saved);
+                const found = usersList.value.find(u => u.id === sess.id && u.isActive !== false);
+                if (!found) { localStorage.removeItem('tuchka_session'); return false; }
+                // Проверка устройства
+                if (found.deviceId && found.deviceId !== getDeviceId()) { localStorage.removeItem('tuchka_session'); return false; }
+                user.value = { id: found.id, phone: found.phone, role: found.role, name: found.name };
+                return true;
+            } catch { return false; }
+        }
+
+        async function handleLogin() {
+            const normalized = normalizePhone(loginPhone.value);
+            const found = usersList.value.find(u => u.phone === normalized && u.password === loginPass.value && u.isActive !== false);
+            if (!found) { Swal.fire('Ошибка', 'Неверный телефон или пароль', 'error'); return; }
+            // Проверка устройства
+            if (found.deviceId && found.deviceId !== getDeviceId()) {
+                Swal.fire('Доступ закрыт', 'Этот аккаунт уже используется на другом устройстве. Обратитесь к администратору.', 'warning');
+                return;
+            }
+            // Привязка устройства при первом входе
+            if (!found.deviceId) {
+                const idx = usersList.value.findIndex(u => u.id === found.id);
+                usersList.value[idx].deviceId = getDeviceId();
                 await saveUsers();
             }
+            user.value = { id: found.id, phone: found.phone, role: found.role, name: found.name };
+            localStorage.setItem('tuchka_session', JSON.stringify({ id: found.id }));
+            activeTab.value = 'stock';
+        }
 
-            async function handleLogin() {
-                const normalized = normalizePhone(loginPhone.value);
-                const found = usersList.value.find(u => u.phone === normalized && u.password === loginPass.value && u.isActive !== false);
-                if (found) {
-                    user.value = { id: found.id, phone: found.phone, role: found.role, name: found.name };
-                    await refreshAll();
-                    activeTab.value = 'stock';
-                } else {
-                    Swal.fire('Ошибка', 'Неверный телефон или пароль', 'error');
+        async function handleRegister() {
+            const normalized = normalizePhone(regPhone.value);
+            const preReg = usersList.value.find(u => u.phone === normalized && !u.password);
+            if (!preReg) {
+                // Проверим есть ли вообще в системе
+                const exists = usersList.value.find(u => u.phone === normalized);
+                if (exists) { Swal.fire('Уже зарегистрирован', 'Этот номер уже имеет пароль. Войдите через вход.', 'info'); return; }
+                Swal.fire('Номер не найден', 'Ваш номер не добавлен администратором', 'error'); return;
+            }
+            if (!regPass.value) { Swal.fire('Ошибка', 'Введите пароль', 'error'); return; }
+            if (regPass.value !== regPass2.value) { Swal.fire('Ошибка', 'Пароли не совпадают', 'error'); return; }
+            const idx = usersList.value.findIndex(u => u.id === preReg.id);
+            usersList.value[idx].password = regPass.value;
+            usersList.value[idx].deviceId = getDeviceId();
+            await saveUsers();
+            user.value = { id: preReg.id, phone: preReg.phone, role: preReg.role, name: preReg.name };
+            localStorage.setItem('tuchka_session', JSON.stringify({ id: preReg.id }));
+            activeTab.value = 'stock';
+            Swal.fire({ icon:'success', title:'Добро пожаловать!', timer:1500, showConfirmButton:false });
+        }
+
+        function logout() {
+            localStorage.removeItem('tuchka_session');
+            user.value = null;
+            loginPhone.value = ''; loginPass.value = '';
+        }
+
+        async function resetDevice(u) {
+            const idx = usersList.value.findIndex(usr => usr.id === u.id);
+            if (idx !== -1) {
+                usersList.value[idx].deviceId = null;
+                await saveUsers();
+                Swal.fire({ icon:'success', title:'Устройство сброшено', timer:1500, showConfirmButton:false });
+            }
+        }
+
+        // ===== СКЛАД =====
+        async function openItemModal(item) {
+            if (user.value.role !== 'admin') return;
+            const obj = item ? {...item} : { id: Date.now()+'_'+Math.random(), name:'', category: categories.value[0]||'Продукты', unit:'шт', cost:0, quantity:0 };
+            const cats = categories.value.length ? categories.value : ['Продукты'];
+            const { value: res } = await Swal.fire({
+                title: item ? '✏️ Редактировать' : '➕ Новый товар',
+                html: `
+                    <div class="input-group"><label>Название</label><input id="s-name" class="swal2-input" value="${(obj.name||'').replace(/"/g,'&quot;')}"></div>
+                    <div class="input-group"><label>Категория</label><select id="s-cat" class="swal2-select">${cats.map(c=>`<option ${c===obj.category?'selected':''}>${c}</option>`).join('')}</select></div>
+                    <div class="input-group"><label>Единица (кг, л, шт...)</label><input id="s-unit" class="swal2-input" value="${obj.unit||''}"></div>
+                    <div class="grid-2">
+                        <div class="input-group"><label>Себестоимость ₽</label><input id="s-cost" type="number" step="0.01" class="swal2-input" value="${obj.cost||0}"></div>
+                        <div class="input-group"><label>Кол-во</label><input id="s-qty" type="number" step="0.01" class="swal2-input" value="${obj.quantity||0}"></div>
+                    </div>
+                    <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:4px;">💡 Продажная цена устанавливается в техкарте</p>
+                `,
+                focusConfirm: false, showCancelButton: true,
+                confirmButtonText: 'Сохранить', cancelButtonText: 'Отмена',
+                preConfirm: () => {
+                    const name = document.getElementById('s-name').value;
+                    const unit = document.getElementById('s-unit').value;
+                    const cost = parseFloat(document.getElementById('s-cost').value);
+                    if (!name) return Swal.showValidationMessage('Введите название');
+                    if (!unit) return Swal.showValidationMessage('Введите единицу');
+                    if (isNaN(cost)) return Swal.showValidationMessage('Введите себестоимость');
+                    return { name, category: document.getElementById('s-cat').value, unit, cost, quantity: parseFloat(document.getElementById('s-qty').value)||0 };
+                }
+            });
+            if (res) {
+                if (item) { const i = stockItems.value.findIndex(x=>x.id===item.id); if(i!==-1) stockItems.value[i]={...item,...res}; }
+                else stockItems.value.push({id:obj.id,...res});
+                saveStock();
+                Swal.fire({ icon:'success', title:'Сохранено', timer:1200, showConfirmButton:false });
+            }
+        }
+
+        async function openIncomeModal(item) {
+            const { value: res } = await Swal.fire({
+                title: `📦 Приход: ${item.name}`,
+                html: `
+                    <div class="input-group"><label>Количество (${item.unit})</label><input id="i-qty" type="number" step="0.01" class="swal2-input" placeholder="0"></div>
+                    <div class="input-group"><label>Цена за единицу ₽ (если отличается)</label><input id="i-cost" type="number" step="0.01" class="swal2-input" placeholder="${item.cost}" value="${item.cost}"></div>
+                `,
+                showCancelButton: true, confirmButtonText: 'Оформить', cancelButtonText: 'Отмена',
+                preConfirm: () => {
+                    const q = parseFloat(document.getElementById('i-qty').value);
+                    const c = parseFloat(document.getElementById('i-cost').value);
+                    if (isNaN(q)||q<=0) return Swal.showValidationMessage('Введите количество');
+                    return { qty: q, cost: isNaN(c) ? item.cost : c };
+                }
+            });
+            if (res) {
+                const idx = stockItems.value.findIndex(i=>i.id===item.id);
+                if (idx!==-1) {
+                    // Средняя себестоимость
+                    const oldQty = stockItems.value[idx].quantity;
+                    const oldCost = stockItems.value[idx].cost;
+                    const newQty = oldQty + res.qty;
+                    stockItems.value[idx].quantity = newQty;
+                    // Пересчёт средней цены
+                    stockItems.value[idx].cost = Math.round(((oldCost * oldQty) + (res.cost * res.qty)) / newQty * 100) / 100;
+                    saveStock();
+                    saveSupply({ id:Date.now(), itemId:item.id, itemName:item.name, quantity:res.qty, unit:item.unit, costPerUnit:res.cost, date:new Date().toISOString() });
+                    Swal.fire({ icon:'success', title:`+${res.qty} ${item.unit}`, text:`Средняя себест: ${stockItems.value[idx].cost} ₽`, timer:2000, showConfirmButton:false });
                 }
             }
-            
-            function logout() { user.value = null; }
+        }
 
-            // Функция для создания HTML формы с подписями
-            function getItemFormHtml(obj, categoriesList) {
-                return `
-                    <div class="input-group">
-                        <label>📝 Название товара</label>
-                        <input id="name" class="swal2-input" placeholder="Например: Зерновой кофе" value="${obj.name.replace(/"/g, '&quot;')}" style="width:100%;">
-                    </div>
-                    <div class="input-group">
-                        <label>📂 Категория</label>
-                        <select id="cat" class="swal2-select" style="width:100%;">
-                            ${categoriesList.map(c => `<option ${c === obj.category ? 'selected' : ''}>${c}</option>`).join('')}
+        async function openDamageModal(item) {
+            const reasons = damageReasons.value;
+            const { value: res } = await Swal.fire({
+                title: `⚠️ Списание: ${item.name}`,
+                html: `
+                    <div class="input-group"><label>Количество (${item.unit}), доступно: ${formatNumber(item.quantity)}</label><input id="d-qty" type="number" step="0.01" class="swal2-input" placeholder="0"></div>
+                    <div class="input-group"><label>Причина</label><select id="d-reason" class="swal2-select">${reasons.map(r=>`<option>${r}</option>`).join('')}</select></div>
+                `,
+                showCancelButton: true, confirmButtonText: 'Списать', cancelButtonText: 'Отмена',
+                preConfirm: () => {
+                    const q = parseFloat(document.getElementById('d-qty').value);
+                    if (isNaN(q)||q<=0) return Swal.showValidationMessage('Введите количество');
+                    if (q>item.quantity) return Swal.showValidationMessage(`Максимум: ${formatNumber(item.quantity)}`);
+                    return { qty: q, reason: document.getElementById('d-reason').value };
+                }
+            });
+            if (res) {
+                const idx = stockItems.value.findIndex(i=>i.id===item.id);
+                if (idx!==-1) {
+                    stockItems.value[idx].quantity -= res.qty;
+                    saveStock();
+                    saveDamage({ id:Date.now(), itemId:item.id, itemName:item.name, quantity:res.qty, unit:item.unit, costPerUnit:item.cost, reason:res.reason, date:new Date().toISOString() });
+                    Swal.fire({ icon:'warning', title:'Списано', text:`-${res.qty} ${item.unit} · ${res.reason}`, timer:1500, showConfirmButton:false });
+                }
+            }
+        }
+
+        // ===== ТЕХКАРТЫ =====
+        function calculateCardCost(card) {
+            return card.ingredients.reduce((sum,ing) => {
+                const item = stockItems.value.find(i=>i.id===ing.itemId);
+                return sum + (item ? item.cost * ing.qty : 0);
+            }, 0);
+        }
+
+        async function sellRecipe(card) {
+            if (!card.ingredients?.length) { Swal.fire('Ошибка','Нет ингредиентов','error'); return; }
+            const missing = card.ingredients.filter(ing => { const s=stockItems.value.find(i=>i.id===ing.itemId); return !s||s.quantity<ing.qty; }).map(i=>i.itemName);
+            if (missing.length) { Swal.fire('Не хватает',missing.join(', '),'warning'); return; }
+            const cost = calculateCardCost(card);
+            const {isConfirmed} = await Swal.fire({
+                title: `☕ ${card.name}`,
+                html: `<div style="text-align:left;">
+                    <div class="stat-row"><span>Себестоимость</span><span>${formatNumber(cost)} ₽</span></div>
+                    <div class="stat-row"><span>Цена продажи</span><span>${formatNumber(card.sellPrice||0)} ₽</span></div>
+                    <div class="stat-row"><span>Прибыль</span><span class="profit-positive">${formatNumber((card.sellPrice||0)-cost)} ₽</span></div>
+                </div>`,
+                showCancelButton:true, confirmButtonText:'✅ Продать', cancelButtonText:'Отмена'
+            });
+            if (!isConfirmed) return;
+            let totalCost = 0;
+            for (const ing of card.ingredients) {
+                const idx = stockItems.value.findIndex(i=>i.id===ing.itemId);
+                if (idx!==-1) { totalCost += stockItems.value[idx].cost*ing.qty; stockItems.value[idx].quantity -= ing.qty; }
+            }
+            saveStock();
+            saveSale({ id:Date.now(), recipeId:card.id, recipeName:card.name, quantity:1, totalCost, revenue:card.sellPrice||0, ingredients:card.ingredients, date:new Date().toISOString() });
+            Swal.fire({ icon:'success', title:'Продано!', timer:1200, showConfirmButton:false });
+        }
+
+        async function openSaleByRecipeModal() {
+            if (!techCards.value.length) { Swal.fire('Нет техкарт','Создайте техкарты','info'); return; }
+            const {value, isConfirmed} = await Swal.fire({
+                title:'Выберите напиток', input:'select',
+                inputOptions: Object.fromEntries(techCards.value.map(c=>[c.id,c.name])),
+                showCancelButton:true, confirmButtonText:'Продать', cancelButtonText:'Отмена'
+            });
+            if (isConfirmed && value) { const card=techCards.value.find(c=>c.id===value); if(card) sellRecipe(card); }
+        }
+
+        async function openTechCardModal(card) {
+            if (user.value.role !== 'admin') return;
+            let cardObj = card ? JSON.parse(JSON.stringify(card)) : { id:Date.now()+'_tc', name:'', sellPrice:0, ingredients:[] };
+
+            const getTcHtml = (obj) => `
+                <div class="input-group"><label>Название напитка</label><input id="tc-name" class="swal2-input" value="${obj.name||''}"></div>
+                <div class="input-group"><label>Цена продажи ₽</label><input id="tc-price" type="number" step="1" class="swal2-input" value="${obj.sellPrice||0}"></div>
+                <div class="input-group"><label>Ингредиенты</label>
+                    <div id="ing-list" style="max-height:250px;overflow:auto;"></div>
+                    <button type="button" id="add-ing" style="margin-top:8px;padding:8px 16px;border-radius:20px;border:none;background:var(--primary);color:white;cursor:pointer;font-family:inherit;font-weight:700;">+ Ингредиент</button>
+                </div>`;
+
+            const renderIngs = (obj) => {
+                const c = document.getElementById('ing-list'); if(!c) return;
+                if (!obj.ingredients.length) { c.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:10px;">Нет ингредиентов</div>'; return; }
+                c.innerHTML = obj.ingredients.map((ing,i) => `
+                    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                        <select class="ing-sel" data-i="${i}" style="flex:2;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;background:var(--bg);">
+                            ${stockItems.value.map(s=>`<option value="${s.id}" ${s.id===ing.itemId?'selected':''}>${s.name} (${s.unit})</option>`).join('')}
                         </select>
-                    </div>
-                    <div class="input-group">
-                        <label>📏 Единица измерения</label>
-                        <input id="unit" class="swal2-input" placeholder="кг, л, шт, порция" value="${obj.unit}" style="width:100%;">
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                        <div class="input-group">
-                            <label>💰 Себестоимость (₽)</label>
-                            <input id="cost" type="number" step="0.01" class="swal2-input" placeholder="0.00" value="${obj.cost}" style="width:100%;">
-                        </div>
-                        <div class="input-group">
-                            <label>🏷️ Продажная цена (₽)</label>
-                            <input id="sellPrice" type="number" step="0.01" class="swal2-input" placeholder="0.00" value="${obj.sellPrice || 0}" style="width:100%;">
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label>📦 Начальное количество</label>
-                        <input id="qty" type="number" step="0.01" class="swal2-input" placeholder="0" value="${obj.quantity}" style="width:100%;">
-                    </div>
-                `;
-            }
+                        <input class="ing-qty" data-i="${i}" type="number" step="0.01" value="${ing.qty}" style="width:75px;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;">
+                        <button type="button" class="del-ing" data-i="${i}" style="background:var(--danger);color:white;border:none;border-radius:20px;padding:6px 10px;cursor:pointer;">✕</button>
+                    </div>`).join('');
+                c.querySelectorAll('.del-ing').forEach(b=>b.addEventListener('click',()=>{ obj.ingredients.splice(parseInt(b.dataset.i),1); renderIngs(obj); }));
+            };
 
-            async function openItemModal(item) {
-                if(user.value.role !== 'admin') return;
-                let obj = item ? {...item} : { 
-                    id: Date.now()+'_'+Math.random(), 
-                    name: '', 
-                    category: categories.value[0] || 'Продукты', 
-                    unit: 'шт', 
-                    cost: 0, 
-                    sellPrice: 0, 
-                    quantity: 0 
-                };
-                
-                const categoriesList = categories.value.length ? categories.value : ['Продукты', 'Хозтовары', 'Упаковка'];
-                
-                Swal.fire({
-                    title: item ? '✏️ Редактировать товар' : '➕ Новый товар',
-                    html: getItemFormHtml(obj, categoriesList),
-                    focusConfirm: false,
-                    showCancelButton: true,
-                    confirmButtonText: 'Сохранить',
-                    cancelButtonText: 'Отмена',
-                    preConfirm: () => {
-                        let name = document.getElementById('name')?.value;
-                        let category = document.getElementById('cat')?.value;
-                        let unit = document.getElementById('unit')?.value;
-                        let cost = parseFloat(document.getElementById('cost')?.value);
-                        let sellPrice = parseFloat(document.getElementById('sellPrice')?.value);
-                        let qty = parseFloat(document.getElementById('qty')?.value);
-                        
-                        if(!name) Swal.showValidationMessage('❌ Введите название товара');
-                        else if(!unit) Swal.showValidationMessage('❌ Введите единицу измерения');
-                        else if(isNaN(cost)) Swal.showValidationMessage('❌ Введите себестоимость');
-                        else return {name, category, unit, cost, sellPrice: isNaN(sellPrice)?0:sellPrice, quantity: isNaN(qty)?0:qty};
-                    }
-                }).then(async res => { 
-                    if(res.isConfirmed) { 
-                        if(item) {
-                            const idx = stockItems.value.findIndex(i => i.id === item.id);
-                            if(idx !== -1) stockItems.value[idx] = {...item, ...res.value};
-                        } else {
-                            stockItems.value.push({id: obj.id, ...res.value});
-                        }
-                        await saveStock();
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Готово!',
-                            text: 'Товар сохранён',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    } 
-                });
-            }
-
-            async function openIncomeModal(item) {
-                Swal.fire({ 
-                    title: `📦 Приход: ${item.name}`, 
-                    html: `<div class="input-group"><label>Количество (${item.unit})</label><input id="income-qty" type="number" step="0.01" class="swal2-input" placeholder="0"></div>`,
-                    showCancelButton: true,
-                    confirmButtonText: 'Оформить приход',
-                    cancelButtonText: 'Отмена',
-                    preConfirm: () => { 
-                        let q = parseFloat(document.getElementById('income-qty')?.value); 
-                        if(isNaN(q) || q <= 0) {
-                            Swal.showValidationMessage('Введите корректное количество');
-                            return false;
-                        }
-                        return q; 
-                    } 
-                }).then(async res => {
-                    if(res.isConfirmed && res.value) {
-                        const idx = stockItems.value.findIndex(i => i.id === item.id);
-                        if(idx !== -1) {
-                            stockItems.value[idx].quantity += res.value;
-                            await saveStock();
-                            await saveSupply({ 
-                                id: Date.now(), 
-                                itemId: item.id, 
-                                itemName: item.name, 
-                                quantity: res.value, 
-                                unit: item.unit, 
-                                costPerUnit: item.cost, 
-                                date: new Date().toISOString() 
-                            });
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Приход оформлен',
-                                text: `+${res.value} ${item.unit}`,
-                                timer: 1500
-                            });
-                        }
-                    }
-                });
-            }
-
-            async function openDamageModal(item) {
-                Swal.fire({ 
-                    title: `⚠️ Списание: ${item.name}`, 
-                    html: `<div class="input-group"><label>Количество для списания (${item.unit})</label><input id="damage-qty" type="number" step="0.01" class="swal2-input" placeholder="0" max="${item.quantity}"></div>
-                           <p style="font-size:12px; color:#64748B; margin-top:8px;">Причина: порча, бой, истечение срока</p>`,
-                    showCancelButton: true,
-                    confirmButtonText: 'Списать',
-                    cancelButtonText: 'Отмена',
-                    preConfirm: () => { 
-                        let q = parseFloat(document.getElementById('damage-qty')?.value); 
-                        if(isNaN(q) || q <= 0) {
-                            Swal.showValidationMessage('Введите корректное количество');
-                            return false;
-                        }
-                        if(q > item.quantity) { 
-                            Swal.showValidationMessage(`Недостаточно на складе. Доступно: ${item.quantity} ${item.unit}`); 
-                            return false; 
-                        }
-                        return q; 
-                    } 
-                }).then(async res => {
-                    if(res.isConfirmed && res.value) {
-                        const idx = stockItems.value.findIndex(i => i.id === item.id);
-                        if(idx !== -1) {
-                            stockItems.value[idx].quantity -= res.value;
-                            await saveStock();
-                            await saveDamage({ 
-                                id: Date.now(), 
-                                itemId: item.id, 
-                                itemName: item.name, 
-                                quantity: res.value, 
-                                unit: item.unit, 
-                                costPerUnit: item.cost, 
-                                reason: 'порча',
-                                date: new Date().toISOString() 
-                            });
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Списано',
-                                text: `-${res.value} ${item.unit}`,
-                                timer: 1500
-                            });
-                        }
-                    }
-                });
-            }
-
-            async function sellRecipe(card) {
-                if(!card.ingredients || card.ingredients.length === 0) { 
-                    Swal.fire('Ошибка', 'В техкарте нет ингредиентов', 'error'); 
-                    return; 
-                }
-                
-                let missing = [];
-                for(let ing of card.ingredients) {
-                    let stockItem = stockItems.value.find(i => i.id === ing.itemId);
-                    if(!stockItem || stockItem.quantity < ing.qty) missing.push(ing.itemName);
-                }
-                if(missing.length) { 
-                    Swal.fire('Не хватает ингредиентов', missing.join(', '), 'warning'); 
-                    return; 
-                }
-                
-                const confirm = await Swal.fire({ 
-                    title: `Продажа ${card.name}`, 
-                    html: `
-                        <div style="text-align:left;">
-                            <div class="inventory-row"><span>Себестоимость:</span><span>${formatNumber(calculateCardCost(card))} ₽</span></div>
-                            <div class="inventory-row"><span>Цена продажи:</span><span>${formatNumber(card.sellPrice || 0)} ₽</span></div>
-                            <div class="inventory-row"><span>Прибыль:</span><span class="profit-positive">${formatNumber((card.sellPrice || 0) - calculateCardCost(card))} ₽</span></div>
-                        </div>
-                    `, 
-                    showCancelButton: true,
-                    confirmButtonText: '✅ Продать',
-                    cancelButtonText: 'Отмена'
-                });
-                if(!confirm.isConfirmed) return;
-                
-                let totalCost = 0;
-                for(let ing of card.ingredients) {
-                    const idx = stockItems.value.findIndex(i => i.id === ing.itemId);
-                    if(idx !== -1) {
-                        totalCost += stockItems.value[idx].cost * ing.qty;
-                        stockItems.value[idx].quantity -= ing.qty;
-                    }
-                }
-                await saveStock();
-                await saveSale({ 
-                    id: Date.now(),
-                    recipeId: card.id, 
-                    recipeName: card.name, 
-                    quantity: 1, 
-                    totalCost: totalCost, 
-                    revenue: card.sellPrice || 0, 
-                    ingredients: card.ingredients,
-                    date: new Date().toISOString() 
-                });
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Продано!',
-                    text: `${card.name} продан`,
-                    timer: 1500
-                });
-            }
-
-            function openSaleByRecipeModal() {
-                if(techCards.value.length === 0) { 
-                    Swal.fire('Нет техкарт', 'Создайте техкарты в разделе "Рецепты"', 'info'); 
-                    return; 
-                }
-                Swal.fire({ 
-                    title: 'Выберите напиток', 
-                    input: 'select', 
-                    inputOptions: Object.fromEntries(techCards.value.map(c => [c.id, c.name])), 
-                    showCancelButton: true,
-                    confirmButtonText: 'Продать',
-                    cancelButtonText: 'Отмена'
-                }).then(res => {
-                    if(res.isConfirmed && res.value) {
-                        let card = techCards.value.find(c => c.id === res.value);
-                        if(card) sellRecipe(card);
-                    }
-                });
-            }
-
-            function calculateCardCost(card) {
-                let total = 0;
-                for(let ing of card.ingredients){
-                    let item = stockItems.value.find(i=>i.id===ing.itemId);
-                    if(item) total += item.cost * ing.qty;
-                }
-                return total;
-            }
-
-            async function openTechCardModal(card) {
-                if(user.value.role !== 'admin') return;
-                let cardObj = card ? {...card} : { id: Date.now()+'_tc', name: '', sellPrice: 0, ingredients: [] };
-                
-                // Создаём HTML для модального окна техкарты
-                const getTechCardHtml = (obj) => {
-                    const ingredientsHtml = obj.ingredients.map((ing, idx) => `
-                        <div style="margin-bottom:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                            <select class="ing-select" data-idx="${idx}" style="flex:2; min-width:120px; padding:8px; border-radius:16px; border:1px solid #E2E8F0;">
-                                ${stockItems.value.map(s => `<option value="${s.id}" ${s.id === ing.itemId ? 'selected' : ''}>${s.name} (${s.unit})</option>`).join('')}
-                            </select>
-                            <input class="ing-qty" data-idx="${idx}" type="number" step="0.01" value="${ing.qty}" placeholder="Кол-во" style="width:80px; padding:8px; border-radius:16px; border:1px solid #E2E8F0;">
-                            <button type="button" class="del-ing" data-idx="${idx}" style="background:#EF4444; color:white; border:none; border-radius:20px; padding:6px 12px; cursor:pointer;">🗑️</button>
-                        </div>
-                    `).join('');
-                    
-                    return `
-                        <div class="input-group">
-                            <label>🍸 Название напитка</label>
-                            <input id="tc-name" class="swal2-input" placeholder="Например: Латте, Капучино" value="${obj.name}">
-                        </div>
-                        <div class="input-group">
-                            <label>💰 Продажная цена (₽)</label>
-                            <input id="tc-sellPrice" type="number" step="0.01" class="swal2-input" placeholder="0.00" value="${obj.sellPrice || 0}">
-                        </div>
-                        <div class="input-group">
-                            <label>📋 Ингредиенты</label>
-                            <div id="ing-list" style="max-height:300px;overflow:auto;margin:10px 0;">${ingredientsHtml || '<div style="text-align:center; color:#94A3B8; padding:20px;">Нет ингредиентов. Нажмите "+" чтобы добавить</div>'}</div>
-                            <button type="button" id="add-ing" class="btn btn-outline" style="margin:8px 0; width:100%;">+ Добавить ингредиент</button>
-                        </div>
-                    `;
-                };
-                
-                const renderIngredients = (obj) => {
-                    const container = document.getElementById('ing-list');
-                    if(!container) return;
-                    if(!obj.ingredients.length) {
-                        container.innerHTML = '<div style="text-align:center; color:#94A3B8; padding:20px;">Нет ингредиентов. Нажмите "+" чтобы добавить</div>';
-                        return;
-                    }
-                    container.innerHTML = obj.ingredients.map((ing, idx) => `
-                        <div style="margin-bottom:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                            <select class="ing-select" data-idx="${idx}" style="flex:2; min-width:120px; padding:8px; border-radius:16px; border:1px solid #E2E8F0;">
-                                ${stockItems.value.map(s => `<option value="${s.id}" ${s.id === ing.itemId ? 'selected' : ''}>${s.name} (${s.unit})</option>`).join('')}
-                            </select>
-                            <input class="ing-qty" data-idx="${idx}" type="number" step="0.01" value="${ing.qty}" placeholder="Кол-во" style="width:80px; padding:8px; border-radius:16px; border:1px solid #E2E8F0;">
-                            <button type="button" class="del-ing" data-idx="${idx}" style="background:#EF4444; color:white; border:none; border-radius:20px; padding:6px 12px; cursor:pointer;">🗑️</button>
-                        </div>
-                    `).join('');
-                    
-                    document.querySelectorAll('.del-ing').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const idx = parseInt(btn.dataset.idx);
-                            obj.ingredients.splice(idx, 1);
-                            renderIngredients(obj);
-                        });
+            const {isConfirmed} = await Swal.fire({
+                title: card ? '✏️ Техкарта' : '➕ Новая техкарта',
+                html: getTcHtml(cardObj),
+                focusConfirm:false, showCancelButton:true,
+                confirmButtonText:'Сохранить', cancelButtonText:'Отмена',
+                didOpen:() => {
+                    renderIngs(cardObj);
+                    document.getElementById('add-ing')?.addEventListener('click',()=>{
+                        if (!stockItems.value.length) { Swal.fire('Нет товаров','Добавьте товары на склад','warning'); return; }
+                        cardObj.ingredients.push({itemId:stockItems.value[0].id,itemName:stockItems.value[0].name,qty:0,unit:stockItems.value[0].unit});
+                        renderIngs(cardObj);
                     });
+                },
+                preConfirm:() => {
+                    const name = document.getElementById('tc-name').value;
+                    if (!name) return Swal.showValidationMessage('Введите название');
+                    const price = parseFloat(document.getElementById('tc-price').value)||0;
+                    const ings = [];
+                    document.querySelectorAll('.ing-sel').forEach((sel,i)=>{
+                        const item = stockItems.value.find(s=>s.id===sel.value);
+                        const qty = parseFloat(document.querySelector(`.ing-qty[data-i="${i}"]`)?.value);
+                        if (item && !isNaN(qty) && qty>0) ings.push({itemId:item.id,itemName:item.name,qty,unit:item.unit});
+                    });
+                    return {name, sellPrice:price, ingredients:ings};
+                }
+            });
+            if (isConfirmed) {
+                // apply from preConfirm result - it's in the resolved promise value
+            }
+            // re-fire for correct result
+            const {value:res, isConfirmed:ok} = await (async()=>{
+                // already handled above, use a workaround
+                return {value: null, isConfirmed:false};
+            })();
+        }
+
+        // Simplified techcard save - rewrite openTechCardModal properly
+        async function saveTechCardModal(card) {
+            if (user.value.role !== 'admin') return;
+            let cardObj = card ? JSON.parse(JSON.stringify(card)) : { id:Date.now()+'_tc', name:'', sellPrice:0, ingredients:[] };
+
+            return new Promise((resolve) => {
+                const getTcHtml = () => `
+                    <div class="input-group"><label>Название напитка</label><input id="tc-name" class="swal2-input" value="${(cardObj.name||'').replace(/"/g,'&quot;')}"></div>
+                    <div class="input-group"><label>Цена продажи ₽</label><input id="tc-price" type="number" step="1" class="swal2-input" value="${cardObj.sellPrice||0}"></div>
+                    <div class="input-group"><label>Ингредиенты</label>
+                        <div id="ing-list" style="max-height:250px;overflow:auto;margin-bottom:6px;"></div>
+                        <button type="button" id="add-ing" style="padding:8px 16px;border-radius:20px;border:none;background:var(--primary);color:white;cursor:pointer;font-family:inherit;font-weight:700;width:100%;">+ Добавить ингредиент</button>
+                    </div>`;
+
+                const renderIngs = () => {
+                    const c = document.getElementById('ing-list'); if(!c) return;
+                    if (!cardObj.ingredients.length) { c.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:8px;">Нет ингредиентов</div>'; return; }
+                    c.innerHTML = cardObj.ingredients.map((ing,i) => `
+                        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                            <select class="ing-sel" data-i="${i}" style="flex:2;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;background:var(--bg);font-size:13px;">
+                                ${stockItems.value.map(s=>`<option value="${s.id}" ${s.id===ing.itemId?'selected':''}>${s.name} (${s.unit})</option>`).join('')}
+                            </select>
+                            <input class="ing-qty" data-i="${i}" type="number" step="0.01" value="${ing.qty}" placeholder="Кол" style="width:70px;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;">
+                            <button type="button" class="del-ing" data-i="${i}" style="background:var(--danger);color:white;border:none;border-radius:20px;padding:7px 10px;cursor:pointer;flex-shrink:0;">✕</button>
+                        </div>`).join('');
+                    c.querySelectorAll('.del-ing').forEach(b=>b.addEventListener('click',()=>{ cardObj.ingredients.splice(parseInt(b.dataset.i),1); renderIngs(); }));
                 };
-                
+
                 Swal.fire({
-                    title: card ? '✏️ Редактировать техкарту' : '➕ Новая техкарта',
-                    html: getTechCardHtml(cardObj),
-                    focusConfirm: false,
-                    showCancelButton: true,
-                    confirmButtonText: 'Сохранить',
-                    cancelButtonText: 'Отмена',
-                    didOpen: () => {
-                        renderIngredients(cardObj);
-                        document.getElementById('add-ing')?.addEventListener('click', () => {
-                            if(stockItems.value.length) {
-                                cardObj.ingredients.push({
-                                    itemId: stockItems.value[0]?.id,
-                                    itemName: stockItems.value[0]?.name,
-                                    qty: 0,
-                                    unit: stockItems.value[0]?.unit
-                                });
-                                renderIngredients(cardObj);
-                            } else {
-                                Swal.fire('Нет товаров', 'Сначала добавьте товары на склад', 'warning');
-                            }
+                    title: card ? '✏️ Техкарта' : '➕ Новая техкарта',
+                    html: getTcHtml(),
+                    focusConfirm:false, showCancelButton:true,
+                    confirmButtonText:'Сохранить', cancelButtonText:'Отмена',
+                    didOpen:() => {
+                        renderIngs();
+                        document.getElementById('add-ing')?.addEventListener('click',()=>{
+                            if (!stockItems.value.length) { Swal.showValidationMessage('Добавьте товары на склад'); return; }
+                            cardObj.ingredients.push({itemId:stockItems.value[0].id,itemName:stockItems.value[0].name,qty:0,unit:stockItems.value[0].unit});
+                            renderIngs();
                         });
                     },
-                    preConfirm: () => {
-                        let name = document.getElementById('tc-name')?.value;
-                        let sellPrice = parseFloat(document.getElementById('tc-sellPrice')?.value);
-                        if(!name) Swal.showValidationMessage('Введите название напитка');
-                        
-                        const ingredients = [];
-                        document.querySelectorAll('.ing-select').forEach((sel, idx) => {
-                            const itemId = sel.value;
-                            const qty = parseFloat(document.querySelector(`.ing-qty[data-idx="${idx}"]`)?.value);
-                            const stockItem = stockItems.value.find(s => s.id === itemId);
-                            if(stockItem && !isNaN(qty) && qty > 0) {
-                                ingredients.push({
-                                    itemId: stockItem.id,
-                                    itemName: stockItem.name,
-                                    qty: qty,
-                                    unit: stockItem.unit
-                                });
-                            }
+                    preConfirm:() => {
+                        const name = document.getElementById('tc-name')?.value?.trim();
+                        if (!name) { Swal.showValidationMessage('Введите название'); return false; }
+                        const price = parseFloat(document.getElementById('tc-price')?.value)||0;
+                        const ings = [];
+                        document.querySelectorAll('.ing-sel').forEach((sel,i)=>{
+                            const item = stockItems.value.find(s=>s.id===sel.value);
+                            const qty = parseFloat(document.querySelector(`.ing-qty[data-i="${i}"]`)?.value);
+                            if (item && !isNaN(qty) && qty>0) ings.push({itemId:item.id,itemName:item.name,qty,unit:item.unit});
                         });
-                        
-                        return { name, sellPrice: isNaN(sellPrice) ? 0 : sellPrice, ingredients };
+                        cardObj.name = name; cardObj.sellPrice = price; cardObj.ingredients = ings;
+                        return true;
                     }
                 }).then(async res => {
-                    if(res.isConfirmed) {
-                        cardObj.name = res.value.name;
-                        cardObj.sellPrice = res.value.sellPrice;
-                        cardObj.ingredients = res.value.ingredients;
-                        if(card) {
-                            const idx = techCards.value.findIndex(c => c.id === card.id);
-                            if(idx !== -1) techCards.value[idx] = cardObj;
-                        } else {
-                            techCards.value.push(cardObj);
-                        }
-                        await saveTechCards();
-                        Swal.fire('Готово!', 'Техкарта сохранена', 'success');
+                    if (res.isConfirmed) {
+                        if (card) { const i=techCards.value.findIndex(c=>c.id===card.id); if(i!==-1) techCards.value[i]=cardObj; }
+                        else techCards.value.push(cardObj);
+                        saveTechCards();
+                        Swal.fire({icon:'success',title:'Сохранено',timer:1200,showConfirmButton:false});
                     }
+                    resolve();
                 });
-            }
-
-            function startInventory() { 
-                if(activeInventory.value) return; 
-                activeInventory.value={startedAt:Date.now()}; 
-                inventoryCounts.value={}; 
-                stockItems.value.forEach(i=>{ inventoryCounts.value[i.id]=i.quantity; }); 
-            }
-            
-            async function completeInventory() { 
-                if(!activeInventory.value) return; 
-                let diffs=[]; 
-                for(let item of stockItems.value){ 
-                    let fact=inventoryCounts.value[item.id]; 
-                    if(fact!==undefined && Math.abs(fact - item.quantity) > 0.001){ 
-                        diffs.push({name:item.name, oldQty:formatNumber(item.quantity), newQty:formatNumber(fact), diff:formatNumber(fact - item.quantity)}); 
-                        item.quantity = fact;
-                    } 
-                } 
-                if(diffs.length) await saveStock();
-                let report={id:Date.now(), createdAt:new Date().toISOString(), status:'Завершена', differences:JSON.stringify(diffs)}; 
-                await saveInventory(report); 
-                Swal.fire('Отчет', diffs.length ? JSON.stringify(diffs,null,2) : 'Нет расхождений', 'info'); 
-                activeInventory.value=null; 
-            }
-            
-            function cancelInventory() { activeInventory.value=null; inventoryCounts.value={}; }
-            function viewInventoryReport(rep) { Swal.fire('Детали инвентаризации', `<pre style="text-align:left;">${rep.differences}</pre>`,'info'); }
-
-            async function generateAnalytics() {
-                let start = new Date(analyticsStartDate.value); 
-                let end = new Date(analyticsEndDate.value); 
-                end.setHours(23,59,59);
-                
-                let salesInPeriod = saleHistory.value.filter(s => new Date(s.date) >= start && new Date(s.date) <= end);
-                let damageInPeriod = damageHistory.value.filter(d => new Date(d.date) >= start && new Date(d.date) <= end);
-                
-                let revenue = salesInPeriod.reduce((sum,s) => sum + (s.revenue || 0), 0);
-                let cost = salesInPeriod.reduce((sum,s) => sum + (s.totalCost || 0), 0);
-                let damageCost = damageInPeriod.reduce((sum,d) => sum + (d.costPerUnit * d.quantity), 0);
-                profitReport.value = { revenue, cost, profit: revenue - cost, damageCost };
-                
-                const salesMap = new Map();
-                
-                for (const sale of salesInPeriod) {
-                    if (sale.ingredients && Array.isArray(sale.ingredients)) {
-                        for (const ing of sale.ingredients) {
-                            const stockItem = stockItems.value.find(i => i.id === ing.itemId);
-                            const category = stockItem?.category || 'Товары';
-                            const key = `${category}|${ing.itemName}|${ing.unit}`;
-                            if (salesMap.has(key)) {
-                                salesMap.get(key).quantity += ing.qty;
-                            } else {
-                                salesMap.set(key, {
-                                    category: category,
-                                    name: ing.itemName,
-                                    quantity: ing.qty,
-                                    unit: ing.unit
-                                });
-                            }
-                        }
-                    }
-                }
-                
-                const grouped = new Map();
-                for (const item of salesMap.values()) {
-                    if (!grouped.has(item.category)) {
-                        grouped.set(item.category, []);
-                    }
-                    grouped.get(item.category).push({
-                        name: item.name,
-                        quantity: item.quantity,
-                        unit: item.unit
-                    });
-                }
-                
-                salesByCategory.value = Array.from(grouped.entries()).map(([name, items]) => ({
-                    name: name,
-                    items: items.sort((a,b) => b.quantity - a.quantity)
-                }));
-                
-                analyticsGenerated.value = true;
-            }
-
-            function setAnalyticsPeriod(period) {
-                let end = new Date(); 
-                let start = new Date();
-                if(period === 'day') start.setDate(end.getDate() - 1);
-                else if(period === 'week') start.setDate(end.getDate() - 7);
-                else if(period === 'month') start.setMonth(end.getMonth() - 1);
-                analyticsStartDate.value = start.toISOString().slice(0,10);
-                analyticsEndDate.value = end.toISOString().slice(0,10);
-                generateAnalytics();
-            }
-
-            async function addCategory() { 
-                if(newCategory.value && !categories.value.includes(newCategory.value)){ 
-                    categories.value.push(newCategory.value); 
-                    newCategory.value=''; 
-                } 
-            }
-            
-            async function removeCategory(cat) { 
-                const hasItems = stockItems.value.some(i => i.category === cat);
-                if(hasItems) {
-                    Swal.fire('Невозможно удалить', 'Сначала переместите или удалите товары из этой категории', 'warning');
-                    return;
-                }
-                categories.value = categories.value.filter(c=>c!==cat); 
-            }
-
-            async function openUserModal(u) {
-                Swal.fire({
-                    title: u ? 'Редактировать пользователя' : 'Новый пользователь',
-                    html: `
-                        <div class="input-group"><label>👤 Имя</label><input id="name" class="swal2-input" placeholder="Имя" value="${u?.name || ''}"></div>
-                        <div class="input-group"><label>📱 Телефон</label><input id="phone" class="swal2-input" placeholder="79991234567" value="${u?.phone || ''}"></div>
-                        <div class="input-group"><label>🔒 Пароль</label><input id="password" class="swal2-input" placeholder="Пароль" value="${u?.password || ''}"></div>
-                        <div class="input-group"><label>👔 Роль</label><select id="role" class="swal2-select">
-                            <option value="admin" ${u?.role === 'admin' ? 'selected' : ''}>Администратор</option>
-                            <option value="barista" ${u?.role === 'barista' ? 'selected' : ''}>Бариста</option>
-                        </select></div>
-                    `,
-                    showCancelButton: true,
-                    confirmButtonText: 'Сохранить',
-                    cancelButtonText: 'Отмена',
-                    preConfirm: () => ({
-                        name: document.getElementById('name').value,
-                        phone: normalizePhone(document.getElementById('phone').value),
-                        password: document.getElementById('password').value,
-                        role: document.getElementById('role').value,
-                        isActive: true
-                    })
-                }).then(async res => {
-                    if(res.isConfirmed) {
-                        if(u) {
-                            const idx = usersList.value.findIndex(usr => usr.id === u.id);
-                            if(idx !== -1) usersList.value[idx] = { ...u, ...res.value };
-                        } else {
-                            usersList.value.push({ id: Date.now().toString(), ...res.value });
-                        }
-                        await saveUsers();
-                        Swal.fire('Сохранено', 'Пользователь сохранён', 'success');
-                    }
-                });
-            }
-            
-            async function toggleUserActive(u) { 
-                const idx = usersList.value.findIndex(usr => usr.id === u.id);
-                if(idx !== -1) usersList.value[idx] = u;
-                await saveUsers(); 
-            }
-            
-            async function deleteUser(u) { 
-                const confirm = await Swal.fire({ title: 'Удалить пользователя?', text: u.name, showCancelButton: true }); 
-                if(confirm.isConfirmed) { 
-                    usersList.value = usersList.value.filter(usr => usr.id !== u.id);
-                    await saveUsers(); 
-                    Swal.fire('Удалено', 'Пользователь удалён', 'success');
-                } 
-            }
-
-            function exportData() { 
-                let data = { 
-                    stock: stockItems.value, 
-                    techCards: techCards.value, 
-                    supplies: supplyHistory.value, 
-                    sales: saleHistory.value, 
-                    damage: damageHistory.value, 
-                    inventory: inventoryReports.value, 
-                    categories: categories.value,
-                    users: usersList.value
-                }; 
-                let blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); 
-                let url = URL.createObjectURL(blob); 
-                let a = document.createElement('a'); 
-                a.href = url; 
-                a.download = `tuchka_backup_${Date.now()}.json`; 
-                a.click(); 
-            }
-            
-            async function importData(event) { 
-                let file = event.target.files[0]; 
-                if(!file) return; 
-                let reader = new FileReader(); 
-                reader.onload = async (e) => { 
-                    let data = JSON.parse(e.target.result); 
-                    if(data.stock) stockItems.value = data.stock;
-                    if(data.techCards) techCards.value = data.techCards;
-                    if(data.supplies) supplyHistory.value = data.supplies;
-                    if(data.sales) saleHistory.value = data.sales;
-                    if(data.damage) damageHistory.value = data.damage;
-                    if(data.inventory) inventoryReports.value = data.inventory;
-                    if(data.users) usersList.value = data.users;
-                    await forceSync();
-                    Swal.fire('Импорт завершен', 'Данные восстановлены', 'success'); 
-                }; 
-                reader.readAsText(file); 
-            }
-            
-            function syncOfflineData() { forceSync(); }
-
-            onMounted(() => { 
-                refreshAll();
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('/Coffee/sw.js').then(reg => console.log('SW registered', reg)).catch(err => console.log('SW failed', err));
-                }
-                window.addEventListener('online', () => { 
-                    offline.value=false; 
-                    refreshAll(); 
-                });
-                window.addEventListener('offline', () => { offline.value=true; });
             });
-            
-            return { 
-                user, loginPhone, loginPass, handleLogin, logout, activeTab, 
-                stockItems, categories, techCards, inventoryReports, supplyHistory, usersList,
-                filterCategory, searchStock, filteredStock, filteredSupplies,
-                openItemModal, openIncomeModal, openDamageModal, openTechCardModal,
-                calculateCardCost, sellRecipe, openSaleByRecipeModal,
-                startInventory, activeInventory, inventoryCounts, completeInventory, cancelInventory, viewInventoryReport,
-                addCategory, removeCategory, newCategory,
-                analyticsStartDate, analyticsEndDate, profitReport, salesByCategory, analyticsGenerated,
-                generateAnalytics, setAnalyticsPeriod,
-                openUserModal, toggleUserActive, deleteUser,
-                exportData, importData, syncOfflineData, offline,
-                syncStatusText, syncStatusIcon, syncStatusClass, syncButtonClass, syncButtonIcon, forceSync,
-                formatNumber
-            };
         }
-    }).mount('#app');
+
+        // ===== ИНВЕНТАРИЗАЦИЯ =====
+        function startInventory() { activeInventory.value={startedAt:Date.now()}; inventoryCounts.value={}; stockItems.value.forEach(i=>{inventoryCounts.value[i.id]=i.quantity;}); }
+        async function completeInventory() {
+            const diffs=[];
+            for (const item of stockItems.value) {
+                const fact=inventoryCounts.value[item.id];
+                if (fact!==undefined && Math.abs(fact-item.quantity)>0.001) { diffs.push({name:item.name,was:formatNumber(item.quantity),now:formatNumber(fact),diff:formatNumber(fact-item.quantity)}); item.quantity=fact; }
+            }
+            if (diffs.length) saveStock();
+            saveInventory({id:Date.now(),createdAt:new Date().toISOString(),status:'Завершена',differences:JSON.stringify(diffs)});
+            Swal.fire('Инвентаризация',diffs.length?'<pre style="text-align:left;font-size:12px;">'+diffs.map(d=>`${d.name}: ${d.was}→${d.now} (${d.diff>0?'+':''}${d.diff})`).join('\n')+'</pre>':'Расхождений нет','info');
+            activeInventory.value=null;
+        }
+        function cancelInventory() { activeInventory.value=null; inventoryCounts.value={}; }
+        function viewInventoryReport(rep) {
+            try { const d=JSON.parse(rep.differences); Swal.fire('Детали',d.length?'<pre style="text-align:left;font-size:12px;">'+d.map(x=>`${x.name}: ${x.was||x.oldQty}→${x.now||x.newQty}`).join('\n')+'</pre>':'Расхождений нет','info'); }
+            catch { Swal.fire('Детали',rep.differences||'Нет данных','info'); }
+        }
+
+        // ===== АНАЛИТИКА =====
+        async function generateAnalytics() {
+            const start = new Date(analyticsStartDate.value);
+            const end = new Date(analyticsEndDate.value); end.setHours(23,59,59);
+            const sales = saleHistory.value.filter(s=>new Date(s.date)>=start&&new Date(s.date)<=end);
+            const damage = damageHistory.value.filter(d=>new Date(d.date)>=start&&new Date(d.date)<=end);
+            const revenue = sales.reduce((s,x)=>s+(x.revenue||0),0);
+            const cost = sales.reduce((s,x)=>s+(x.totalCost||0),0);
+            const damageCost = damage.reduce((s,d)=>s+(d.costPerUnit*d.quantity),0);
+            profitReport.value = {revenue, cost, profit:revenue-cost, damageCost};
+            const map = new Map();
+            for (const sale of sales) {
+                if (!sale.ingredients) continue;
+                for (const ing of sale.ingredients) {
+                    const si = stockItems.value.find(i=>i.id===ing.itemId);
+                    const cat = si?.category||'Товары';
+                    const key = cat+'|'+ing.itemName;
+                    if (map.has(key)) map.get(key).quantity += ing.qty;
+                    else map.set(key, {category:cat,name:ing.itemName,quantity:ing.qty,unit:ing.unit});
+                }
+            }
+            const grouped = new Map();
+            for (const item of map.values()) {
+                if (!grouped.has(item.category)) grouped.set(item.category,[]);
+                grouped.get(item.category).push(item);
+            }
+            salesByCategory.value = [...grouped.entries()].map(([name,items])=>({name,items:items.sort((a,b)=>b.quantity-a.quantity)}));
+            analyticsGenerated.value = true;
+        }
+        function setAnalyticsPeriod(p) {
+            const e=new Date(), s=new Date();
+            if(p==='day') s.setDate(e.getDate()-1);
+            else if(p==='week') s.setDate(e.getDate()-7);
+            else s.setMonth(e.getMonth()-1);
+            analyticsStartDate.value=s.toISOString().slice(0,10);
+            analyticsEndDate.value=e.toISOString().slice(0,10);
+            generateAnalytics();
+        }
+
+        // ===== КАТЕГОРИИ =====
+        function addCategory() { if(newCategory.value&&!categories.value.includes(newCategory.value)){categories.value.push(newCategory.value);newCategory.value='';} }
+        function removeCategory(c) { if(stockItems.value.some(i=>i.category===c)){Swal.fire('Нельзя','Сначала переместите товары','warning');return;} categories.value=categories.value.filter(x=>x!==c); }
+        function addDamageReason() { if(newDamageReason.value&&!damageReasons.value.includes(newDamageReason.value)){damageReasons.value.push(newDamageReason.value);newDamageReason.value='';} }
+        function removeDamageReason(r) { damageReasons.value=damageReasons.value.filter(x=>x!==r); }
+
+        // ===== ПОЛЬЗОВАТЕЛИ =====
+        async function openUserModal(u) {
+            const isNew = !u;
+            const canSetRole = isSuperAdmin.value || (user.value?.role === 'admin' && (!u || u.role === 'barista'));
+            const { value:res, isConfirmed } = await Swal.fire({
+                title: u ? '✏️ Пользователь' : '➕ Новый пользователь',
+                html: `
+                    <div class="input-group"><label>Имя</label><input id="u-name" class="swal2-input" value="${u?.name||''}"></div>
+                    <div class="input-group"><label>Телефон</label><input id="u-phone" class="swal2-input" placeholder="79991234567" value="${u?.phone||''}" ${!isNew&&!isSuperAdmin.value?'readonly':''}></div>
+                    ${isSuperAdmin.value ? `<div class="input-group"><label>Пароль (необязательно)</label><input id="u-pass" class="swal2-input" placeholder="Оставьте пустым — установит сам" value="${u?.password||''}"></div>` : ''}
+                    <div class="input-group"><label>Роль</label><select id="u-role" class="swal2-select" ${!canSetRole?'disabled':''}>
+                        ${isSuperAdmin.value ? `<option value="admin" ${u?.role==='admin'?'selected':''}>Администратор</option>` : ''}
+                        <option value="barista" ${u?.role==='barista'?'selected':''}>Бариста</option>
+                    </select></div>
+                `,
+                showCancelButton:true, confirmButtonText:'Сохранить', cancelButtonText:'Отмена',
+                preConfirm:() => {
+                    const name = document.getElementById('u-name').value;
+                    if (!name) return Swal.showValidationMessage('Введите имя');
+                    const phone = normalizePhone(document.getElementById('u-phone').value);
+                    if (!phone) return Swal.showValidationMessage('Введите телефон');
+                    const pass = isSuperAdmin.value ? document.getElementById('u-pass')?.value : (u?.password||'');
+                    return { name, phone, password:pass, role:document.getElementById('u-role').value, isActive:true };
+                }
+            });
+            if (isConfirmed && res) {
+                if (u) { const i=usersList.value.findIndex(x=>x.id===u.id); if(i!==-1) usersList.value[i]={...usersList.value[i],...res}; }
+                else usersList.value.push({id:Date.now().toString(),...res});
+                await saveUsers();
+                Swal.fire({icon:'success',title:'Сохранено',timer:1200,showConfirmButton:false});
+            }
+        }
+
+        async function toggleUserActive(u) {
+            if (u.id === SUPER_ADMIN_ID) { u.isActive=true; return; }
+            const idx = usersList.value.findIndex(x=>x.id===u.id);
+            if(idx!==-1) usersList.value[idx]=u;
+            await saveUsers();
+        }
+
+        async function deleteUser(u) {
+            if (!canDeleteUser(u)) { Swal.fire('Нельзя','Недостаточно прав','error'); return; }
+            const {isConfirmed} = await Swal.fire({title:'Удалить?',text:u.name,showCancelButton:true,confirmButtonColor:'#E17055'});
+            if (isConfirmed) {
+                usersList.value = usersList.value.filter(x=>x.id!==u.id);
+                await saveUsers();
+                Swal.fire({icon:'success',title:'Удалено',timer:1200,showConfirmButton:false});
+            }
+        }
+
+        // ===== BACKUP =====
+        function exportData() {
+            const data={stock:stockItems.value,techCards:techCards.value,supplies:supplyHistory.value,sales:saleHistory.value,damage:damageHistory.value,inventory:inventoryReports.value,users:usersList.value};
+            const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+            a.download=`tuchka_${new Date().toISOString().slice(0,10)}.json`; a.click();
+        }
+        async function importData(e) {
+            const file=e.target.files[0]; if(!file) return;
+            const text=await file.text();
+            const data=JSON.parse(text);
+            if(data.stock) stockItems.value=data.stock;
+            if(data.techCards) techCards.value=data.techCards;
+            if(data.supplies) supplyHistory.value=data.supplies;
+            if(data.sales) saleHistory.value=data.sales;
+            if(data.damage) damageHistory.value=data.damage;
+            if(data.inventory) inventoryReports.value=data.inventory;
+            if(data.users) usersList.value=data.users;
+            await forceSync();
+            Swal.fire({icon:'success',title:'Импорт завершён',timer:1500,showConfirmButton:false});
+        }
+
+        onMounted(async () => {
+            await refreshAll();
+            if (!tryAutoLogin()) { /* show login */ }
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('/Coffee/sw.js').catch(()=>{});
+            window.addEventListener('online', ()=>{ offline.value=false; refreshAll(); });
+            window.addEventListener('offline', ()=>{ offline.value=true; });
+        });
+
+        return {
+            user, loginPhone, loginPass, authMode, regPhone, regPass, regPass2,
+            handleLogin, handleRegister, logout,
+            activeTab, stockItems, categories, techCards, inventoryReports, supplyHistory, usersList,
+            filterCategory, searchStock, filteredStock, filteredSupplies, supplySearch,
+            openItemModal, openIncomeModal, openDamageModal,
+            openTechCardModal: saveTechCardModal, calculateCardCost, sellRecipe, openSaleByRecipeModal,
+            startInventory, activeInventory, inventoryCounts, completeInventory, cancelInventory, viewInventoryReport,
+            addCategory, removeCategory, newCategory,
+            damageReasons, newDamageReason, addDamageReason, removeDamageReason,
+            analyticsStartDate, analyticsEndDate, profitReport, salesByCategory, analyticsGenerated,
+            generateAnalytics, setAnalyticsPeriod,
+            openUserModal, toggleUserActive, deleteUser, resetDevice, canDeleteUser, isSuperAdmin, superAdminId,
+            exportData, importData, offline,
+            syncStatusText, syncStatusIcon, syncStatusClass, syncButtonClass, syncButtonIcon, forceSync,
+            formatNumber
+        };
+    }
+}).mount('#app');
 </script>
 </body>
 </html>
