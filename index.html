@@ -694,54 +694,51 @@ function getDeviceId() {
     return id;
 }
 
+// ============== РАБОТА ЧЕРЕЗ GAS (БЕЗ ТОКЕНА В КОДЕ) ==============
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzMQe7a-ekqyjgDOpT-0LQC-Ou3H0EBTlmieA_SRzBrV1YrwuUoi4SXDQe4FMaCTWA/exec';
+
 const syncState = ref('idle');
 
 class GitHubDB {
-    constructor() {
-        this.apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data`;
-        this.headers = { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' };
-        this.pendingWrites = new Map();
-        this.writeTimeout = null;
-    }
-    
-    async getFile(filename) {
-        const url = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/data/${filename}?t=${Date.now()}`;
-        const r = await fetch(url);
-        if (r.status === 404) return [];
-        const text = await r.text();
-        if (!text.trim()) return [];
-        return JSON.parse(text);
-    }
-    
-    async saveFile(filename, data) {
-        try {
-            const getR = await fetch(`${this.apiUrl}/${filename}`, { headers: this.headers });
-            let sha = null;
-            if (getR.status === 200) sha = (await getR.json()).sha;
-            const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-            await fetch(`${this.apiUrl}/${filename}`, {
-                method: 'PUT',
-                headers: { ...this.headers, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: `Update ${filename}`, content, sha, branch: BRANCH })
-            });
-            return true;
-        } catch(e) { console.error('saveFile', filename, e); return false; }
-    }
-    
-    scheduleSave(filename, data) {
-        this.pendingWrites.set(filename, data);
-        if (this.writeTimeout) clearTimeout(this.writeTimeout);
-        this.writeTimeout = setTimeout(async () => {
-            syncState.value = 'syncing';
-            const writes = [...this.pendingWrites.entries()];
-            this.pendingWrites.clear();
-            try {
-                for (const [fn, d] of writes) await this.saveFile(fn, d);
-                syncState.value = 'success';
-                setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
-            } catch { syncState.value = 'error'; }
-        }, 800);
-    }
+  async request(action, data = null) {
+    const url = new URL(GAS_API_URL);
+    url.searchParams.append('action', action);
+    const options = { method: data ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' } };
+    if (data) options.body = JSON.stringify(data);
+    try {
+      const response = await fetch(url.toString(), options);
+      const result = await response.json();
+      if (!result.success && result.error) console.error('API Error:', result.error);
+      return result;
+    } catch(e) { console.error('Request error:', e); return { error: e.toString() }; }
+  }
+
+  async getFile(filename) {
+    const action = filename.replace('.json', '');
+    const res = await this.request(`get${action.charAt(0).toUpperCase() + action.slice(1)}`);
+    return Array.isArray(res) ? res : [];
+  }
+
+  async saveFile(filename, data) {
+    const action = filename.replace('.json', '');
+    await this.request(`save${action.charAt(0).toUpperCase() + action.slice(1)}`, data);
+  }
+
+  scheduleSave(filename, data) {
+    this.pendingWrites = this.pendingWrites || new Map();
+    this.pendingWrites.set(filename, data);
+    if (this.writeTimeout) clearTimeout(this.writeTimeout);
+    this.writeTimeout = setTimeout(async () => {
+      syncState.value = 'syncing';
+      const writes = [...this.pendingWrites.entries()];
+      this.pendingWrites.clear();
+      try {
+        for (const [fn, d] of writes) await this.saveFile(fn, d);
+        syncState.value = 'success';
+        setTimeout(() => { if (syncState.value === 'success') syncState.value = 'idle'; }, 2000);
+      } catch { syncState.value = 'error'; }
+    }, 800);
+  }
 }
 
 const db = new GitHubDB();
