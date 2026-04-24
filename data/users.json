@@ -2,11 +2,11 @@
   {
     "id": "u1",
     "phone": "79778700833",
-    "password": "",
+    "password": "5ebebb5598ac4ec6d6339ec1b72fcef8fa2f5013ad0cb081fd062a35ae707cff",
     "role": "admin",
     "name": "Артур",
     "isActive": true,
-    "deviceId": null
+    "deviceId": "dev_ne5wzgjyn4gmobynwcc"
   },
   {
     "id": "u2",
@@ -14,14 +14,6 @@
     "password": "000",
     "role": "barista",
     "name": "Маргарита",
-    "isActive": true
-  },
-  {
-    "id": "1777073258331",
-    "name": "Артур",
-    "phone": "79778700834",
-    "password": "111",
-    "role": "admin",
     "isActive": true
   }
 ]
