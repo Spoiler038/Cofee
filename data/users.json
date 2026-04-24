@@ -5,7 +5,8 @@
     "password": "5ebebb5598ac4ec6d6339ec1b72fcef8fa2f5013ad0cb081fd062a35ae707cff",
     "role": "admin",
     "name": "Артур",
-    "isActive": true
+    "isActive": true,
+    "deviceId": "dev_uz8qbujkbglmodj0m3o"
   },
   {
     "id": "u2",
