@@ -1,8 +1,8 @@
-const CACHE_NAME = 'tuchka-v1';
+const CACHE_NAME = 'tuchka-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  '/Coffee/',
+  '/Coffee/index.html',
+  '/Coffee/manifest.json'
 ];
 
 self.addEventListener('install', event => {
@@ -14,6 +14,12 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Не кэшируем запросы к GitHub API
+  if (event.request.url.includes('api.github.com') || 
+      event.request.url.includes('raw.githubusercontent.com')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   event.respondWith(
     caches.match(event.request)
       .then(response => response || fetch(event.request))
