@@ -9,15 +9,6 @@
     "deviceId": "dev_ne5wzgjyn4gmobynwcc"
   },
   {
-    "id": "u2",
-    "phone": "79771627484",
-    "password": "2ac9a6746aca543af8dff39894cfe8173afba21eb01c6fae33d52947222855ef",
-    "role": "barista",
-    "name": "Маргарита",
-    "isActive": true,
-    "deviceId": "dev_wswf3jj01fjmoe6neve"
-  },
-  {
     "id": "1777073565774",
     "name": "Артур",
     "phone": "79778700834",
