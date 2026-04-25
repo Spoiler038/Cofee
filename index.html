@@ -15,6 +15,10 @@
     <style>
         [v-cloak] { display: none !important; }
 
+        /* Кнопки SweetAlert2 — фикс hover */
+        .swal2-confirm:hover,
+        .swal2-cancel:hover { filter: brightness(0.88) !important; opacity: 1 !important; }
+
         :root {
             --primary: #6C5CE7;
             --primary-dark: #5849c2;
@@ -646,6 +650,19 @@ const GITHUB_TOKEN = _e.map((b,i) => String.fromCharCode(b ^ _k.charCodeAt(i % _
 </script>
 <script>
 const { createApp, ref, computed, onMounted } = Vue;
+
+// Русский язык для всех диалогов SweetAlert2
+const _SwalDefaults = {
+    confirmButtonText: 'ОК',
+    cancelButtonText: 'Отмена',
+};
+const _origFire = Swal.fire.bind(Swal);
+Swal.fire = function(a, b, c) {
+    if (typeof a === 'object' && a !== null) {
+        return _origFire({ ..._SwalDefaults, ...a });
+    }
+    return _origFire(a, b, c);
+};
 
 const REPO_OWNER = 'spoiler038';
 const REPO_NAME = 'Coffee';
