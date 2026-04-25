@@ -3,6 +3,13 @@
     "id": "1777078319232_tc",
     "name": "Эспрессо",
     "sellPrice": 160,
-    "ingredients": []
+    "ingredients": [
+      {
+        "itemId": "p1",
+        "itemName": "Зерновой кофе",
+        "qty": 0.016,
+        "unit": "кг"
+      }
+    ]
   }
 ]
