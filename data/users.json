@@ -22,7 +22,7 @@
     "name": "Маргарита",
     "phone": "79771627484",
     "password": "",
-    "role": "barista",
+    "role": "admin",
     "isActive": true,
     "deviceId": null
   }
