@@ -553,18 +553,20 @@
 
             <!-- АНАЛИТИКА -->
             <div v-show="activeTab==='analytics'">
-                <div class="page-header"><span class="page-title">📈 Аналитика</span></div>
+            <div class="page-header"><span class="page-title">📈 Аналитика</span></div>
                 <div class="card">
-                    <div class="date-row">
-                        <input type="date" v-model="analyticsStartDate" class="input">
-                        <span style="color:var(--text-muted);">—</span>
-                        <input type="date" v-model="analyticsEndDate" class="input">
-                        <button @click="generateAnalytics" class="btn btn-primary btn-sm">Считать</button>
-                    </div>
-                    <div class="period-btns">
-                        <button @click="setAnalyticsPeriod('day')" class="btn btn-sm">День</button>
-                        <button @click="setAnalyticsPeriod('week')" class="btn btn-sm">Неделя</button>
-                        <button @click="setAnalyticsPeriod('month')" class="btn btn-sm">Месяц</button>
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <input type="date" v-model="analyticsStartDate" class="input" style="width: auto;">
+                            <span style="color:var(--text-muted);">—</span>
+                            <input type="date" v-model="analyticsEndDate" class="input" style="width: auto;">
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <button @click="setAnalyticsPeriod('day')" class="btn btn-sm">День</button>
+                            <button @click="setAnalyticsPeriod('week')" class="btn btn-sm">Неделя</button>
+                            <button @click="setAnalyticsPeriod('month')" class="btn btn-sm">Месяц</button>
+                            <button @click="generateAnalytics" class="btn btn-primary btn-sm">Считать</button>
+                        </div>
                     </div>
                 </div>
                 <!-- Импорт файла продаж -->
