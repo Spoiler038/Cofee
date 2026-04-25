@@ -6,7 +6,7 @@
     "unit": "кг",
     "cost": 1200,
     "sellPrice": 2500,
-    "quantity": 5.2
+    "quantity": 5.152
   },
   {
     "id": "p2",
@@ -24,7 +24,7 @@
     "unit": "шт",
     "cost": 6.76,
     "sellPrice": 10,
-    "quantity": 40
+    "quantity": 37
   },
   {
     "id": "1777072642413_0.6876116310485119",
@@ -32,6 +32,6 @@
     "category": "Упаковка",
     "unit": "шт",
     "cost": 2,
-    "quantity": 200
+    "quantity": 197
   }
 ]
