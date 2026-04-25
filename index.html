@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Тучка ☕ — Складской учет</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E☕%3C/text%3E%3C/svg%3E">
     <meta name="theme-color" content="#2D1B69">
@@ -173,7 +173,6 @@
             font-size: 13px; cursor: pointer;
             transition: all 0.15s; color: var(--text);
             display: inline-flex; align-items: center; gap: 6px;
-            justify-content: center; gap: 6px;
         }
         .btn:hover { filter: brightness(0.95); }
         .btn-primary { background: var(--primary); color: white; }
@@ -323,20 +322,6 @@
         .tab-btns { display: flex; gap: 6px; margin-bottom: 20px; background: var(--bg); border-radius: 14px; padding: 4px; }
         .tab-btn { flex: 1; padding: 9px; border: none; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; background: transparent; color: var(--text-muted); transition: all 0.2s; }
         .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
-
-        /* Адаптация для телефонов */
-@media (max-width: 550px) {
-    .analytics-toolbar {
-        flex-direction: column;
-        align-items: stretch !important;
-    }
-    .analytics-date-group {
-        justify-content: center;
-    }
-    .analytics-buttons-group {
-        justify-content: center;
-    }
-}
     </style>
 </head>
 <body>
@@ -443,7 +428,8 @@
                         <div style="font-weight:800;font-size:15px;">{{ card.name }}</div>
                         <div style="display:flex;gap:6px;">
                             <button @click="sellRecipe(card)" class="btn btn-success btn-sm"><i class="fas fa-shopping-cart"></i></button>
-                            <button v-if="user.role==='admin'" @click="openTechCardModal(card)" class="btn btn-sm"><i class="fas fa-edit"></i></button>
+                            <button v-if="user.role==='admin'" @click="saveTechCardModal(card)" class="btn btn-sm"><i class="fas fa-edit"></i></button>
+                            <button v-if="user.role==='admin'" @click="deleteTechCard(card)" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                     <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">
@@ -515,23 +501,21 @@
             </div>
 
             <!-- АНАЛИТИКА -->
-<div v-show="activeTab==='analytics'">
-    <div class="page-header"><span class="page-title">📈 Аналитика</span></div>
-    <div class="card">
-        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <input type="date" v-model="analyticsStartDate" class="input" style="width: auto;">
-                <span style="color:var(--text-muted);">—</span>
-                <input type="date" v-model="analyticsEndDate" class="input" style="width: auto;">
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <button @click="setAnalyticsPeriod('day')" class="btn btn-sm">День</button>
-                <button @click="setAnalyticsPeriod('week')" class="btn btn-sm">Неделя</button>
-                <button @click="setAnalyticsPeriod('month')" class="btn btn-sm">Месяц</button>
-                <button @click="generateAnalytics" class="btn btn-primary btn-sm">Считать</button>
-            </div>
-        </div>
-    </div>
+            <div v-show="activeTab==='analytics'">
+                <div class="page-header"><span class="page-title">📈 Аналитика</span></div>
+                <div class="card">
+                    <div class="date-row">
+                        <input type="date" v-model="analyticsStartDate" class="input">
+                        <span style="color:var(--text-muted);">—</span>
+                        <input type="date" v-model="analyticsEndDate" class="input">
+                        <button @click="generateAnalytics" class="btn btn-primary btn-sm">Считать</button>
+                    </div>
+                    <div class="period-btns">
+                        <button @click="setAnalyticsPeriod('day')" class="btn btn-sm">День</button>
+                        <button @click="setAnalyticsPeriod('week')" class="btn btn-sm">Неделя</button>
+                        <button @click="setAnalyticsPeriod('month')" class="btn btn-sm">Месяц</button>
+                    </div>
+                </div>
                 <!-- Импорт файла продаж -->
                 <div class="card" v-if="user.role==='admin'">
                     <div class="card-title">📂 Загрузить продажи из файла</div>
@@ -732,30 +716,35 @@ class GitHubDB {
             return JSON.parse(text);
         } catch(e) { console.error('getFile', filename, e); return []; }
     }
-    async saveFile(filename, data, silent=false) {
-        try {
-            // Получаем актуальный sha перед каждым сохранением
-            const getR = await fetch(`${this.apiUrl}/${filename}`, { headers: this.headers });
-            let sha = null;
-            if (getR.status === 200) {
-                const fileData = await getR.json();
-                sha = fileData.sha;
+    async saveFile(filename, data, silent=false, retries=3) {
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try {
+                const getR = await fetch(`${this.apiUrl}/${filename}`, { headers: this.headers });
+                let sha = null;
+                if (getR.status === 200) sha = (await getR.json()).sha;
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+                const putR = await fetch(`${this.apiUrl}/${filename}`, {
+                    method: 'PUT',
+                    headers: { ...this.headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Update ${filename}`, content, sha, branch: BRANCH })
+                });
+                if (putR.status === 409) {
+                    // Конфликт sha — повторяем с актуальным sha
+                    console.warn(`Conflict ${filename}, retry ${attempt+1}`);
+                    await new Promise(r => setTimeout(r, 500));
+                    continue;
+                }
+                if (!putR.ok) { const err = await putR.json(); throw new Error(err.message || putR.status); }
+                if (!silent) { syncState.value = 'success'; setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000); }
+                return;
+            } catch(e) {
+                if (attempt === retries-1) {
+                    console.error('saveFile', filename, e);
+                    if (!silent) syncState.value = 'error';
+                    throw e;
+                }
+                await new Promise(r => setTimeout(r, 500));
             }
-            const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-            const putR = await fetch(`${this.apiUrl}/${filename}`, {
-                method: 'PUT',
-                headers: { ...this.headers, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: `Update ${filename}`, content, sha, branch: BRANCH })
-            });
-            if (!putR.ok) {
-                const err = await putR.json();
-                throw new Error(err.message || putR.status);
-            }
-            if (!silent) { syncState.value = 'success'; setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000); }
-        } catch(e) {
-            console.error('saveFile', filename, e);
-            if (!silent) syncState.value = 'error';
-            throw e;
         }
     }
     scheduleSave(filename, data) {
@@ -768,11 +757,9 @@ class GitHubDB {
             let hasError = false;
             // Сохраняем последовательно чтобы избежать конфликтов sha
             for (const [fn, d] of writes) {
-    try { 
-        await this.saveFile(fn, d, true);
-        await new Promise(r => setTimeout(r, 300));
-    } catch(e) { hasError = true; }
-}
+                try { await this.saveFile(fn, d, true); }
+                catch { hasError = true; }
+            }
             syncState.value = hasError ? 'error' : 'success';
             if (!hasError) setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
         }, 1500);
@@ -872,30 +859,27 @@ createApp({
         const saveDamage = (d) => { damageHistory.value.unshift(d); db.scheduleSave('damage.json', damageHistory.value); };
         const saveInventory = (r) => { inventoryReports.value.unshift(r); db.scheduleSave('inventory.json', inventoryReports.value); };
 
-         async function forceSync() {
-    if (syncState.value === 'syncing') return;
-    syncState.value = 'syncing';
-    try {
-        await db.saveFile('stock.json', stockItems.value, true);
-        await new Promise(r => setTimeout(r, 300));
-        await db.saveFile('techcards.json', techCards.value, true);
-        await new Promise(r => setTimeout(r, 300));
-        await db.saveFile('supplies.json', supplyHistory.value, true);
-        await new Promise(r => setTimeout(r, 300));
-        await db.saveFile('sales.json', saleHistory.value, true);
-        await new Promise(r => setTimeout(r, 300));
-        await db.saveFile('inventory.json', inventoryReports.value, true);
-        await new Promise(r => setTimeout(r, 300));
-        await db.saveFile('damage.json', damageHistory.value, true);
-        await new Promise(r => setTimeout(r, 300));
-        await db.saveFile('users.json', usersList.value, true);
-        syncState.value = 'success';
-        setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
-    } catch(e) {
-        syncState.value = 'error';
-        console.error('forceSync error', e);
-    }
-}
+        async function forceSync() {
+            if (syncState.value === 'syncing') return;
+            syncState.value = 'syncing';
+            // Последовательно — параллельные запросы вызывают 409 конфликт sha
+            const files = [
+                ['stock.json', stockItems.value],
+                ['techcards.json', techCards.value],
+                ['supplies.json', supplyHistory.value],
+                ['sales.json', saleHistory.value],
+                ['inventory.json', inventoryReports.value],
+                ['damage.json', damageHistory.value],
+                ['users.json', usersList.value],
+            ];
+            let hasError = false;
+            for (const [fn, d] of files) {
+                try { await db.saveFile(fn, d, true); }
+                catch { hasError = true; }
+            }
+            syncState.value = hasError ? 'error' : 'success';
+            if (!hasError) setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
+        }
 
         // Автологин
         function tryAutoLogin() {
@@ -924,15 +908,17 @@ createApp({
                 usersList.value[idx].password = await hashPassword(loginPass.value);
                 await db.saveFile('users.json', usersList.value, true);
             }
-            // Проверка устройства
-            if (found.deviceId && found.deviceId !== getDeviceId()) {
-                Swal.fire('Доступ закрыт', 'Этот аккаунт уже используется на другом устройстве. Обратитесь к администратору.', 'warning');
-                return;
-            }
-            if (!found.deviceId) {
-                const idx = usersList.value.findIndex(u => u.id === found.id);
-                usersList.value[idx].deviceId = getDeviceId();
-                await db.saveFile('users.json', usersList.value, true);
+            // Проверка устройства — суперадмин не ограничен
+            if (found.id !== SUPER_ADMIN_ID) {
+                if (found.deviceId && found.deviceId !== getDeviceId()) {
+                    Swal.fire('Доступ закрыт', 'Этот аккаунт уже используется на другом устройстве. Обратитесь к администратору.', 'warning');
+                    return;
+                }
+                if (!found.deviceId) {
+                    const idx = usersList.value.findIndex(u => u.id === found.id);
+                    usersList.value[idx].deviceId = getDeviceId();
+                    await db.saveFile('users.json', usersList.value, true);
+                }
             }
             user.value = { id: found.id, phone: found.phone, role: found.role, name: found.name };
             localStorage.setItem('tuchka_session', JSON.stringify({ id: found.id }));
@@ -970,8 +956,12 @@ createApp({
             const idx = usersList.value.findIndex(usr => usr.id === u.id);
             if (idx !== -1) {
                 usersList.value[idx].deviceId = null;
-                await saveUsers();
-                Swal.fire({ icon:'success', title:'Устройство сброшено', timer:1500, showConfirmButton:false });
+                usersList.value[idx].deviceId = undefined;
+                delete usersList.value[idx].deviceId;
+                await db.saveFile('users.json', usersList.value, true);
+                // Обновляем список в памяти
+                usersList.value = [...usersList.value];
+                Swal.fire({ icon:'success', title:'Устройство сброшено', text:'Пользователь может войти с нового устройства', timer:2000, showConfirmButton:false });
             }
         }
 
@@ -985,10 +975,14 @@ createApp({
                 html: `
                     <div class="input-group"><label>Название</label><input id="s-name" class="swal2-input" value="${(obj.name||'').replace(/"/g,'&quot;')}"></div>
                     <div class="input-group"><label>Категория</label><select id="s-cat" class="swal2-select">${cats.map(c=>`<option ${c===obj.category?'selected':''}>${c}</option>`).join('')}</select></div>
-                    <div class="input-group"><label>Единица (кг, л, шт...)</label><input id="s-unit" class="swal2-input" value="${obj.unit||''}"></div>
+                    <div style="display:flex;gap:8px;align-items:flex-end;">
+                        <div class="input-group" style="flex:1;margin-bottom:0;"><label>Единица учёта (мл, г, шт...)</label><input id="s-unit" class="swal2-input" value="${obj.unit||''}"></div>
+                        <div class="input-group" style="width:110px;margin-bottom:0;"><label>В упаковке</label><input id="s-pkg" type="number" step="0.01" class="swal2-input" placeholder="напр. 1000" value="${obj.packageSize||''}"></div>
+                    </div>
+                    <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:4px;margin-bottom:8px;">💡 Если молоко приходит пакетами по 1000 мл — введите 1000. Тогда при приходе вводите цену за упаковку, себестоимость за мл посчитается автоматически.</p>
                     <div class="grid-2">
-                        <div class="input-group"><label>Себестоимость ₽</label><input id="s-cost" type="number" step="0.01" class="swal2-input" value="${obj.cost||0}"></div>
-                        <div class="input-group"><label>Кол-во</label><input id="s-qty" type="number" step="0.01" class="swal2-input" value="${obj.quantity||0}"></div>
+                        <div class="input-group"><label>Себестоимость ₽ за ${obj.unit||'единицу'}</label><input id="s-cost" type="number" step="0.001" class="swal2-input" value="${obj.cost||0}"></div>
+                        <div class="input-group"><label>Кол-во на складе</label><input id="s-qty" type="number" step="0.01" class="swal2-input" value="${obj.quantity||0}"></div>
                     </div>
                     <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:4px;">💡 Продажная цена устанавливается в техкарте</p>
                 `,
@@ -998,10 +992,11 @@ createApp({
                     const name = document.getElementById('s-name').value;
                     const unit = document.getElementById('s-unit').value;
                     const cost = parseFloat(document.getElementById('s-cost').value);
+                    const pkg = parseFloat(document.getElementById('s-pkg').value);
                     if (!name) return Swal.showValidationMessage('Введите название');
                     if (!unit) return Swal.showValidationMessage('Введите единицу');
                     if (isNaN(cost)) return Swal.showValidationMessage('Введите себестоимость');
-                    return { name, category: document.getElementById('s-cat').value, unit, cost, quantity: parseFloat(document.getElementById('s-qty').value)||0 };
+                    return { name, category: document.getElementById('s-cat').value, unit, cost, quantity: parseFloat(document.getElementById('s-qty').value)||0, packageSize: isNaN(pkg)||pkg<=0 ? null : pkg };
                 }
             });
             if (res) {
@@ -1017,18 +1012,25 @@ createApp({
         }
 
         async function openIncomeModal(item) {
+            const hasPkg = item.packageSize && item.packageSize > 1;
+            const pkgLabel = hasPkg ? `упаковок (1 уп = ${item.packageSize} ${item.unit})` : item.unit;
             const { value: res } = await Swal.fire({
                 title: `📦 Приход: ${item.name}`,
                 html: `
-                    <div class="input-group"><label>Количество (${item.unit})</label><input id="i-qty" type="number" step="0.01" class="swal2-input" placeholder="0"></div>
-                    <div class="input-group"><label>Цена за единицу ₽ (если отличается)</label><input id="i-cost" type="number" step="0.01" class="swal2-input" placeholder="${item.cost}" value="${item.cost}"></div>
+                    <div class="input-group"><label>Количество (${pkgLabel})</label><input id="i-qty" type="number" step="0.01" class="swal2-input" placeholder="0"></div>
+                    <div class="input-group"><label>${hasPkg ? 'Цена за упаковку ₽' : 'Цена за единицу ₽'}</label><input id="i-cost" type="number" step="0.01" class="swal2-input" value="${hasPkg ? Math.round(item.cost * item.packageSize * 100)/100 : item.cost}"></div>
+                    ${hasPkg ? `<p style="font-size:12px;color:var(--primary);text-align:left;margin-top:4px;">Себестоимость за ${item.unit} посчитается автоматически: цена ÷ ${item.packageSize}</p>` : ''}
                 `,
                 showCancelButton: true, confirmButtonText: 'Оформить', cancelButtonText: 'Отмена',
                 preConfirm: () => {
                     const q = parseFloat(document.getElementById('i-qty').value);
                     const c = parseFloat(document.getElementById('i-cost').value);
                     if (isNaN(q)||q<=0) return Swal.showValidationMessage('Введите количество');
-                    return { qty: q, cost: isNaN(c) ? item.cost : c };
+                    if (isNaN(c)||c<=0) return Swal.showValidationMessage('Введите цену');
+                    // Если есть упаковка — пересчитываем в единицы учёта
+                    const realQty = hasPkg ? q * item.packageSize : q;
+                    const costPerUnit = hasPkg ? Math.round(c / item.packageSize * 1000) / 1000 : c;
+                    return { qty: realQty, cost: costPerUnit, packagesCount: hasPkg ? q : null };
                 }
             });
             if (res) {
@@ -1037,8 +1039,8 @@ createApp({
                     const oldQty = stockItems.value[idx].quantity;
                     const oldCost = stockItems.value[idx].cost;
                     const newQty = oldQty + res.qty;
-                    stockItems.value[idx].quantity = newQty;
-                    stockItems.value[idx].cost = Math.round(((oldCost * oldQty) + (res.cost * res.qty)) / newQty * 100) / 100;
+                    stockItems.value[idx].quantity = Math.round(newQty * 1000) / 1000;
+                    stockItems.value[idx].cost = Math.round(((oldCost * oldQty) + (res.cost * res.qty)) / newQty * 1000) / 1000;
                     const supply = { id:Date.now(), itemId:item.id, itemName:item.name, quantity:res.qty, unit:item.unit, costPerUnit:res.cost, date:new Date().toISOString() };
                     supplyHistory.value.unshift(supply);
                     syncState.value = 'syncing';
@@ -1046,7 +1048,7 @@ createApp({
                     await db.saveFile('supplies.json', supplyHistory.value, true);
                     syncState.value = 'success';
                     setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
-                    Swal.fire({ icon:'success', title:`+${res.qty} ${item.unit}`, text:`Средняя себест: ${stockItems.value[idx].cost} ₽`, timer:2000, showConfirmButton:false });
+                    Swal.fire({ icon:'success', title:`Принято`, text:`+${res.qty} ${item.unit} · себест. ${stockItems.value[idx].cost} ₽/${item.unit}`, timer:2000, showConfirmButton:false });
                 }
             }
         }
@@ -1285,6 +1287,19 @@ createApp({
                     resolve();
                 });
             });
+        }
+
+        async function deleteTechCard(card) {
+            const {isConfirmed} = await Swal.fire({
+                title:'Удалить рецепт?', text:card.name,
+                showCancelButton:true, confirmButtonColor:'#E17055',
+                confirmButtonText:'Удалить', cancelButtonText:'Отмена'
+            });
+            if (isConfirmed) {
+                techCards.value = techCards.value.filter(c=>c.id!==card.id);
+                await db.saveFile('techcards.json', techCards.value, true);
+                Swal.fire({icon:'success',title:'Удалено',timer:1200,showConfirmButton:false});
+            }
         }
 
         // ===== ИНВЕНТАРИЗАЦИЯ =====
@@ -1545,7 +1560,7 @@ createApp({
             activeTab, stockItems, categories, techCards, inventoryReports, supplyHistory, usersList,
             filterCategory, searchStock, filteredStock, filteredSupplies, supplySearch,
             openItemModal, openIncomeModal, openDamageModal,
-            openTechCardModal: saveTechCardModal, calculateCardCost, sellRecipe, openSaleByRecipeModal,
+            openTechCardModal: saveTechCardModal, calculateCardCost, sellRecipe, openSaleByRecipeModal, deleteTechCard,
             startInventory, activeInventory, inventoryCounts, completeInventory, cancelInventory, viewInventoryReport,
             addCategory, removeCategory, newCategory,
             damageReasons, newDamageReason, addDamageReason, removeDamageReason,
