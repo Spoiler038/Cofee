@@ -768,9 +768,11 @@ class GitHubDB {
             let hasError = false;
             // Сохраняем последовательно чтобы избежать конфликтов sha
             for (const [fn, d] of writes) {
-                try { await this.saveFile(fn, d, true); }
-                catch { hasError = true; }
-            }
+    try { 
+        await this.saveFile(fn, d, true);
+        await new Promise(r => setTimeout(r, 300));
+    } catch(e) { hasError = true; }
+}
             syncState.value = hasError ? 'error' : 'success';
             if (!hasError) setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
         }, 1500);
@@ -870,21 +872,30 @@ createApp({
         const saveDamage = (d) => { damageHistory.value.unshift(d); db.scheduleSave('damage.json', damageHistory.value); };
         const saveInventory = (r) => { inventoryReports.value.unshift(r); db.scheduleSave('inventory.json', inventoryReports.value); };
 
-        async function forceSync() {
-            if (syncState.value === 'syncing') return;
-            syncState.value = 'syncing';
-            await Promise.all([
-                db.saveFile('stock.json', stockItems.value, true),
-                db.saveFile('techcards.json', techCards.value, true),
-                db.saveFile('supplies.json', supplyHistory.value, true),
-                db.saveFile('sales.json', saleHistory.value, true),
-                db.saveFile('inventory.json', inventoryReports.value, true),
-                db.saveFile('damage.json', damageHistory.value, true),
-                db.saveFile('users.json', usersList.value, true),
-            ]);
-            syncState.value = 'success';
-            setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
-        }
+         async function forceSync() {
+    if (syncState.value === 'syncing') return;
+    syncState.value = 'syncing';
+    try {
+        await db.saveFile('stock.json', stockItems.value, true);
+        await new Promise(r => setTimeout(r, 300));
+        await db.saveFile('techcards.json', techCards.value, true);
+        await new Promise(r => setTimeout(r, 300));
+        await db.saveFile('supplies.json', supplyHistory.value, true);
+        await new Promise(r => setTimeout(r, 300));
+        await db.saveFile('sales.json', saleHistory.value, true);
+        await new Promise(r => setTimeout(r, 300));
+        await db.saveFile('inventory.json', inventoryReports.value, true);
+        await new Promise(r => setTimeout(r, 300));
+        await db.saveFile('damage.json', damageHistory.value, true);
+        await new Promise(r => setTimeout(r, 300));
+        await db.saveFile('users.json', usersList.value, true);
+        syncState.value = 'success';
+        setTimeout(()=>{ if(syncState.value==='success') syncState.value='idle'; },2000);
+    } catch(e) {
+        syncState.value = 'error';
+        console.error('forceSync error', e);
+    }
+}
 
         // Автологин
         function tryAutoLogin() {
