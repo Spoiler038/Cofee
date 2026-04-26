@@ -369,5 +369,14 @@
     "cost": 0.86,
     "quantity": 210,
     "packageSize": 70
+  },
+  {
+    "id": "1777213189223_0.013821260348791053",
+    "name": "Сироп Пряный манго Монин 1 л",
+    "category": "Добавки",
+    "unit": "л",
+    "cost": 675,
+    "quantity": 0,
+    "packageSize": null
   }
 ]
