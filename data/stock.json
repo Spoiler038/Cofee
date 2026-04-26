@@ -366,8 +366,8 @@
     "name": "Маршмеллоу",
     "category": "Продукты",
     "unit": "г",
-    "cost": 60,
-    "quantity": 2,
+    "cost": 0.85,
+    "quantity": 210,
     "packageSize": 70
   }
 ]
