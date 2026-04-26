@@ -1171,7 +1171,7 @@ createApp({
         // ===== СКЛАД =====
         async function openItemModal(item) {
             if (user.value.role !== 'admin') return;
-            const obj = item ? {...item} : { id: Date.now()+'_'+Math.random(), name:'', category: categories.value[0]||'Продукты', unit:'шт', cost:0, quantity:0 };
+            const obj = item ? {...item} : { id: Date.now()+'_'+Math.random(), name:'', category: filterCategory.value || categories.value[0] || 'Продукты', unit:'шт', cost:0, quantity:0 };
             const cats = categories.value.length ? categories.value : ['Продукты'];
             const { value: res } = await Swal.fire({
                 title: item ? '✏️ Редактировать' : '➕ Новый товар',
