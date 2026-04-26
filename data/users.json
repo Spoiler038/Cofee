@@ -16,5 +16,13 @@
     "role": "admin",
     "isActive": true,
     "deviceId": "dev_3g17tlofrpwmoe713m6"
+  },
+  {
+    "id": "1777241104330",
+    "name": "Тест бариста",
+    "phone": "79991234567",
+    "password": "000",
+    "role": "barista",
+    "isActive": true
   }
 ]
