@@ -205,7 +205,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 675,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -377,7 +377,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 675,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -386,7 +386,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 675,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -395,7 +395,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 675,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -404,7 +404,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 675,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -413,7 +413,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 735,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -422,7 +422,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 675,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -431,7 +431,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 675,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -440,7 +440,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 735,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -449,7 +449,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 675,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   },
   {
@@ -458,7 +458,7 @@
     "category": "Добавки",
     "unit": "л",
     "cost": 675,
-    "quantity": 0,
+    "quantity": 1,
     "packageSize": null
   }
 ]
