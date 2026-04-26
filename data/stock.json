@@ -13,11 +13,11 @@
     "id": "p2",
     "name": "Молоко 3.2% 1 л",
     "category": "Продукты",
-    "unit": "л",
+    "unit": "мл",
     "cost": 90,
     "sellPrice": 150,
     "quantity": 12,
-    "packageSize": null
+    "packageSize": 1000
   },
   {
     "id": "p3",
