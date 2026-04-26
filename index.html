@@ -443,7 +443,12 @@
                             <option value="">Все разделы</option>
                             <option v-for="cat in categories" :value="cat">{{ cat }}</option>
                         </select>
-                        <input type="text" v-model="searchStock" placeholder="Поиск..." class="input" style="flex:1;min-width:120px;">
+                        <input type="text" v-model="searchStock" placeholder="Поиск..." class="input" style="flex:1;min-width:100px;">
+                        <select v-model="stockSort" style="width:auto;border-radius:10px;padding:8px 10px;font-size:12px;border:1.5px solid var(--border);background:var(--bg);font-family:inherit;font-weight:600;">
+                            <option value="name">А-Я</option>
+                            <option value="category">По разделу</option>
+                            <option value="qty">По кол-ву</option>
+                        </select>
                     </div>
                     <div v-if="filteredStock.length === 0" style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Нет товаров</div>
                     <div v-for="item in filteredStock" :key="item.id" class="row">
@@ -470,8 +475,16 @@
                         <button @click="openSaleByRecipeModal" class="btn btn-success btn-sm"><i class="fas fa-cash-register"></i> Продажа</button>
                     </div>
                 </div>
+                <div class="card" style="padding:10px 12px;margin-bottom:8px;">
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <span style="font-size:12px;font-weight:700;color:var(--text-muted);">Сортировка:</span>
+                        <button @click="techSort='name'" class="btn btn-sm" :class="{active: techSort==='name'}" :style="techSort==='name'?'background:var(--primary);color:white;':''">А-Я</button>
+                        <button @click="techSort='cost'" class="btn btn-sm" :style="techSort==='cost'?'background:var(--primary);color:white;':''">По себест.</button>
+                        <button @click="techSort='profit'" class="btn btn-sm" :style="techSort==='profit'?'background:var(--primary);color:white;':''">По прибыли</button>
+                    </div>
+                </div>
                 <div v-if="techCards.length===0" class="card" style="text-align:center;color:var(--text-muted);padding:30px;">Нет техкарт</div>
-                <div class="card" v-for="card in techCards" :key="card.id">
+                <div class="card" v-for="card in sortedTechCards" :key="card.id">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">
                         <div style="font-weight:800;font-size:15px;">{{ card.name }}</div>
                         <div style="display:flex;gap:6px;">
@@ -674,6 +687,60 @@
                 </div>
             </div>
 
+            <!-- ЖУРНАЛ ВЫРУЧКИ -->
+            <div v-show="activeTab==='cashlog' && user.role==='admin'">
+                <div class="page-header">
+                    <span class="page-title">💵 Журнал выручки</span>
+                    <button v-if="cashLogUnlocked" @click="openCashLogModal" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> День</button>
+                </div>
+                <div class="card" v-if="!cashLogUnlocked">
+                    <div style="text-align:center;padding:20px;">
+                        <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+                        <div style="font-weight:700;margin-bottom:16px;">Данные зашифрованы</div>
+                        <input type="password" v-model="cashLogPin" placeholder="Пин-код" class="input" style="max-width:200px;text-align:center;margin:0 auto 12px;display:block;" @keyup.enter="unlockCashLog">
+                        <button @click="unlockCashLog" class="btn btn-primary" style="margin-top:8px;">Разблокировать</button>
+                        <div v-if="cashLogError" style="color:var(--danger);font-size:12px;margin-top:8px;">{{ cashLogError }}</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:12px;">Первый вход — установите пин-код</div>
+                    </div>
+                </div>
+                <div v-if="cashLogUnlocked">
+                    <div class="card">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:100px;text-align:center;background:var(--primary-light);padding:12px;border-radius:14px;">
+                                <div style="font-size:11px;color:var(--text-muted);">Нал (месяц)</div>
+                                <div style="font-weight:800;font-size:16px;color:var(--success);">{{ formatNumber(cashLogMonthTotal('cash')) }} ₽</div>
+                            </div>
+                            <div style="flex:1;min-width:100px;text-align:center;background:var(--primary-light);padding:12px;border-radius:14px;">
+                                <div style="font-size:11px;color:var(--text-muted);">Безнал (месяц)</div>
+                                <div style="font-weight:800;font-size:16px;color:var(--primary);">{{ formatNumber(cashLogMonthTotal('card')) }} ₽</div>
+                            </div>
+                            <div style="flex:1;min-width:100px;text-align:center;background:var(--primary-light);padding:12px;border-radius:14px;">
+                                <div style="font-size:11px;color:var(--text-muted);">Итого (месяц)</div>
+                                <div style="font-weight:800;font-size:16px;">{{ formatNumber(cashLogMonthTotal('cash') + cashLogMonthTotal('card') + cashLogMonthTotal('other')) }} ₽</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div v-if="cashLogEntries.length===0" style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Нет записей</div>
+                        <div v-for="entry in cashLogEntries" :key="entry.id" class="row">
+                            <div class="row-left">
+                                <div class="item-name">{{ new Date(entry.date).toLocaleDateString('ru') }}</div>
+                                <div class="item-meta" v-if="entry.note">{{ entry.note }}</div>
+                            </div>
+                            <div style="text-align:right;font-size:13px;flex-shrink:0;">
+                                <div style="color:var(--success);">🪙 {{ formatNumber(entry.cash) }} ₽</div>
+                                <div style="color:var(--primary);">💳 {{ formatNumber(entry.card) }} ₽</div>
+                                <div v-if="entry.other" style="color:var(--text-muted);">+ {{ formatNumber(entry.other) }} ₽</div>
+                            </div>
+                            <button @click="deleteCashEntry(entry)" class="btn btn-danger btn-sm btn-icon"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="card" style="text-align:center;">
+                        <button @click="lockCashLog" class="btn"><i class="fas fa-lock"></i> Заблокировать</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -685,6 +752,7 @@
             <button class="nav-item" :class="{active:activeTab==='inventory'}" @click="activeTab='inventory'"><i class="fas fa-clipboard-list"></i><span>Инвент</span></button>
             <button class="nav-item" :class="{active:activeTab==='supplies'}" @click="activeTab='supplies'"><i class="fas fa-history"></i><span>Поставки</span></button>
             <button class="nav-item" :class="{active:activeTab==='analytics'}" @click="activeTab='analytics'"><i class="fas fa-chart-line"></i><span>Аналитика</span></button>
+            <button v-if="user.role==='admin'" class="nav-item" :class="{active:activeTab==='cashlog'}" @click="activeTab='cashlog'"><i class="fas fa-wallet"></i><span>Выручка</span></button>
             <button v-if="user.role==='admin'" class="nav-item" :class="{active:activeTab==='settings'}" @click="activeTab='settings'"><i class="fas fa-cog"></i><span>Админ</span></button>
         </div>
     </div>
@@ -895,10 +963,27 @@ createApp({
         const syncButtonClass = computed(() => syncState.value === 'idle' ? '' : syncState.value);
         const syncButtonIcon = computed(() => syncState.value === 'syncing' ? 'fas fa-spinner fa-pulse' : (syncState.value === 'success' ? 'fas fa-check' : 'fas fa-cloud-upload-alt'));
 
-        const filteredStock = computed(() => stockItems.value.filter(i =>
-            (!filterCategory.value || i.category === filterCategory.value) &&
-            (!searchStock.value || i.name.toLowerCase().includes(searchStock.value.toLowerCase()))
-        ));
+        const stockSort = ref('name'); // name, category, qty
+        const techSort = ref('name'); // name, cost, profit
+
+        const filteredStock = computed(() => {
+            let list = stockItems.value.filter(i =>
+                (!filterCategory.value || i.category === filterCategory.value) &&
+                (!searchStock.value || i.name.toLowerCase().includes(searchStock.value.toLowerCase()))
+            );
+            if (stockSort.value === 'name') list = [...list].sort((a,b) => a.name.localeCompare(b.name, 'ru'));
+            else if (stockSort.value === 'qty') list = [...list].sort((a,b) => b.quantity - a.quantity);
+            else if (stockSort.value === 'category') list = [...list].sort((a,b) => a.category.localeCompare(b.category, 'ru') || a.name.localeCompare(b.name, 'ru'));
+            return list;
+        });
+
+        const sortedTechCards = computed(() => {
+            let list = [...techCards.value];
+            if (techSort.value === 'name') list.sort((a,b) => a.name.localeCompare(b.name, 'ru'));
+            else if (techSort.value === 'cost') list.sort((a,b) => calculateCardCost(a) - calculateCardCost(b));
+            else if (techSort.value === 'profit') list.sort((a,b) => ((b.sellPrice||0) - calculateCardCost(b)) - ((a.sellPrice||0) - calculateCardCost(a)));
+            return list;
+        });
         const filteredSupplies = computed(() => supplyHistory.value.filter(l =>
             !supplySearch.value || l.itemName.toLowerCase().includes(supplySearch.value.toLowerCase())
         ));
@@ -1094,10 +1179,10 @@ createApp({
                     <div class="input-group"><label>Название</label><input id="s-name" class="swal2-input" value="${(obj.name||'').replace(/"/g,'&quot;')}"></div>
                     <div class="input-group"><label>Категория</label><select id="s-cat" class="swal2-select">${cats.map(c=>`<option ${c===obj.category?'selected':''}>${c}</option>`).join('')}</select></div>
                     <div style="display:flex;gap:8px;align-items:flex-end;">
-                        <div class="input-group" style="flex:1;margin-bottom:0;"><label>Единица учёта (мл, г, шт...)</label><input id="s-unit" class="swal2-input" value="${obj.unit||''}"></div>
-                        <div class="input-group" style="width:110px;margin-bottom:0;"><label>В упаковке</label><input id="s-pkg" type="number" step="0.01" class="swal2-input" placeholder="напр. 1000" value="${obj.packageSize||''}"></div>
+                        <div class="input-group" style="flex:1;margin-bottom:0;"><label>Единица учёта (мл, г, кг, шт...)</label><input id="s-unit" class="swal2-input" value="${obj.unit||''}"></div>
+                        <div class="input-group" style="width:110px;margin-bottom:0;"><label>Ед. в упаковке</label><input id="s-pkg" type="number" step="0.001" class="swal2-input" placeholder="не обяз." value="${obj.packageSize||''}"></div>
                     </div>
-                    <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:4px;margin-bottom:8px;">💡 Если молоко приходит пакетами по 1000 мл — введите 1000. Тогда при приходе вводите цену за упаковку, себестоимость за мл посчитается автоматически.</p>
+                    <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:4px;margin-bottom:8px;">💡 <b>Ед. в упаковке</b> — если товар приходит упаковками. Пример: горячий шоколад учитывается в <b>г</b>, приходит пачками по <b>750 г</b> → введите 750. При приходе вводите количество пачек и цену за пачку — себестоимость за грамм посчитается автоматически.</p>
                     <div class="grid-2">
                         <div class="input-group"><label>Себестоимость ₽ за ${obj.unit||'единицу'}</label><input id="s-cost" type="number" step="0.001" class="swal2-input" value="${obj.cost||0}"></div>
                         <div class="input-group"><label>Кол-во на складе</label><input id="s-qty" type="number" step="0.01" class="swal2-input" value="${obj.quantity||0}"></div>
@@ -1185,6 +1270,19 @@ createApp({
                     `<option value="${i.id}" ${i.id === selectedId ? 'selected' : ''}>${i.name} (${i.unit}${i.packageSize ? ', уп=' + i.packageSize : ''})</option>`
                 ).join('');
 
+            const updateTotal = () => {
+                let total = 0;
+                document.querySelectorAll('.bulk-row').forEach((rowEl, i) => {
+                    if (!rows[i]) return;
+                    const q = parseFloat(document.querySelector(`.b-qty[data-i="${i}"]`)?.value) || 0;
+                    const c = parseFloat(document.querySelector(`.b-cost[data-i="${i}"]`)?.value) || 0;
+                    rows[i].qty = q; rows[i].cost = c;
+                    total += q * c;
+                });
+                const totEl = document.getElementById('bulk-total');
+                if (totEl) totEl.textContent = `Итого: ${Math.round(total * 100) / 100} ₽`;
+            };
+
             const renderRows = () => {
                 const c = document.getElementById('bulk-rows');
                 if (!c) return;
@@ -1198,25 +1296,15 @@ createApp({
                         <select class="b-item swal2-select" data-i="${i}" style="padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;font-size:12px;background:var(--bg);">
                             ${getOptionsHtml(row.itemId)}
                         </select>
-                        <input class="b-qty swal2-input" data-i="${i}" type="number" step="0.01" placeholder="${unitLabel}" value="${row.qty}" style="margin:0;padding:8px;font-size:12px;" title="Кол-во (${unitLabel})">
-                        <input class="b-cost swal2-input" data-i="${i}" type="number" step="0.01" placeholder="${costLabel}" value="${row.cost}" style="margin:0;padding:8px;font-size:12px;" title="${costLabel}">
+                        <input class="b-qty swal2-input" data-i="${i}" type="number" step="0.01" placeholder="${unitLabel}" value="${row.qty||''}" style="margin:0;padding:8px;font-size:12px;" title="Кол-во (${unitLabel})">
+                        <input class="b-cost swal2-input" data-i="${i}" type="number" step="0.01" placeholder="${costLabel}" value="${row.cost||''}" style="margin:0;padding:8px;font-size:12px;" title="${costLabel}">
                         <button type="button" class="del-row" data-i="${i}" style="background:var(--danger);color:white;border:none;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:12px;">✕</button>
                     </div>`;
                 }).join('');
 
-                // Итог
-                let total = 0;
-                rows.forEach(row => {
-                    const item = getItemById(row.itemId);
-                    const hasPkg = item?.packageSize && item.packageSize > 1;
-                    const q = parseFloat(row.qty) || 0;
-                    const c = parseFloat(row.cost) || 0;
-                    total += hasPkg ? q * c : q * c;
-                });
-                const totEl = document.getElementById('bulk-total');
-                if (totEl) totEl.textContent = `Итого: ${Math.round(total * 100) / 100} ₽`;
+                updateTotal();
 
-                // События
+                // При смене товара — только перерисовываем строку (не всё)
                 c.querySelectorAll('.b-item').forEach(sel => {
                     sel.addEventListener('change', e => {
                         const i = parseInt(e.target.dataset.i);
@@ -1226,14 +1314,13 @@ createApp({
                         renderRows();
                     });
                 });
-                c.querySelectorAll('.b-qty').forEach(inp => {
-                    inp.addEventListener('input', e => { rows[parseInt(e.target.dataset.i)].qty = e.target.value; renderRows(); });
-                });
-                c.querySelectorAll('.b-cost').forEach(inp => {
-                    inp.addEventListener('input', e => { rows[parseInt(e.target.dataset.i)].cost = e.target.value; renderRows(); });
+                // При вводе — только обновляем итог, не перерисовываем!
+                c.querySelectorAll('.b-qty, .b-cost').forEach(inp => {
+                    inp.addEventListener('input', updateTotal);
                 });
                 c.querySelectorAll('.del-row').forEach(btn => {
                     btn.addEventListener('click', e => {
+                        updateTotal(); // сохраняем актуальные значения
                         const i = parseInt(e.target.dataset.i);
                         if (rows.length > 1) { rows.splice(i, 1); renderRows(); }
                     });
@@ -1271,31 +1358,30 @@ createApp({
                     });
                 },
                 preConfirm: () => {
+                    updateTotal(); // синхронизируем rows из DOM
                     const date = document.getElementById('bulk-date')?.value;
                     if (!date) return Swal.showValidationMessage('Выберите дату');
-                    const valid = [];
+                    let hasError = false;
                     for (let i = 0; i < rows.length; i++) {
-                        const item = getItemById(rows[i].itemId);
-                        const q = parseFloat(rows[i].qty);
-                        const c = parseFloat(rows[i].cost);
-                        if (!item) continue;
-                        if (isNaN(q) || q <= 0) return Swal.showValidationMessage(`Строка ${i+1}: введите количество`);
-                        if (isNaN(c) || c <= 0) return Swal.showValidationMessage(`Строка ${i+1}: введите цену`);
-                        valid.push({ item, qty: q, cost: c });
+                        const q = parseFloat(document.querySelector(`.b-qty[data-i="${i}"]`)?.value);
+                        const c = parseFloat(document.querySelector(`.b-cost[data-i="${i}"]`)?.value);
+                        rows[i].qty = isNaN(q) ? 0 : q;
+                        rows[i].cost = isNaN(c) ? 0 : c;
+                        if (!rows[i].itemId) continue;
+                        if (isNaN(q) || q <= 0) { Swal.showValidationMessage(`Строка ${i+1}: введите количество`); hasError = true; break; }
+                        if (isNaN(c) || c <= 0) { Swal.showValidationMessage(`Строка ${i+1}: введите цену`); hasError = true; break; }
                     }
-                    if (!valid.length) return Swal.showValidationMessage('Добавьте хотя бы один товар');
-                    return { date, items: valid };
+                    if (hasError) return false;
+                    return { date };
                 }
             });
 
             if (!isConfirmed) return;
 
-            // Применяем поставку
-            const result = await Swal.fire({ title: '⏳', text: 'Сохраняем...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-
-            // Собираем данные из preConfirm
-            const date = document.getElementById('bulk-date')?.value || today;
-            const supplyDate = new Date(date + 'T12:00:00').toISOString();
+            const supplyDate = new Date(rows._date || today + 'T12:00:00').toISOString();
+            // Берём дату из последнего preConfirm
+            const bulkDate = document.getElementById('bulk-date')?.value || today;
+            const finalDate = new Date(bulkDate + 'T12:00:00').toISOString();
             const newSupplies = [];
 
             for (const row of rows) {
@@ -1320,10 +1406,12 @@ createApp({
                         id: Date.now() + '_' + Math.random().toString(36).slice(2),
                         itemId: item.id, itemName: item.name,
                         quantity: realQty, unit: item.unit,
-                        costPerUnit, date: supplyDate
+                        costPerUnit, date: finalDate
                     });
                 }
             }
+
+            if (!newSupplies.length) { Swal.fire('Ошибка', 'Нет данных для сохранения', 'error'); return; }
 
             supplyHistory.value = [...newSupplies, ...supplyHistory.value];
             syncState.value = 'syncing';
@@ -1335,7 +1423,7 @@ createApp({
             Swal.fire({
                 icon: 'success',
                 title: 'Поставка оформлена',
-                text: `${newSupplies.length} позиций · ${new Date(supplyDate).toLocaleDateString()}`,
+                text: `${newSupplies.length} позиций · ${new Date(finalDate).toLocaleDateString()}`,
                 timer: 2000, showConfirmButton: false
             });
         }
@@ -1525,6 +1613,19 @@ createApp({
                         <button type="button" id="add-ing" style="padding:8px 16px;border-radius:20px;border:none;background:var(--primary);color:white;cursor:pointer;font-family:inherit;font-weight:700;width:100%;">+ Добавить ингредиент</button>
                     </div>`;
 
+                // Сохраняем текущие значения из DOM в cardObj перед перерисовкой
+                const syncFromDom = () => {
+                    document.querySelectorAll('.ing-sel').forEach((sel, i) => {
+                        if (cardObj.ingredients[i]) cardObj.ingredients[i].itemId = sel.value;
+                    });
+                    document.querySelectorAll('.ing-qty').forEach((inp, i) => {
+                        if (cardObj.ingredients[i]) {
+                            const v = parseFloat(inp.value);
+                            if (!isNaN(v)) cardObj.ingredients[i].qty = v;
+                        }
+                    });
+                };
+
                 const renderIngs = () => {
                     const c = document.getElementById('ing-list'); if(!c) return;
                     if (!cardObj.ingredients.length) { c.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:8px;">Нет ингредиентов</div>'; return; }
@@ -1533,10 +1634,33 @@ createApp({
                             <select class="ing-sel" data-i="${i}" style="flex:2;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;background:var(--bg);font-size:13px;">
                                 ${stockItems.value.map(s=>`<option value="${s.id}" ${s.id===ing.itemId?'selected':''}>${s.name} (${s.unit})</option>`).join('')}
                             </select>
-                            <input class="ing-qty" data-i="${i}" type="number" step="0.01" value="${ing.qty}" placeholder="Кол" style="width:70px;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;">
+                            <input class="ing-qty" data-i="${i}" type="number" step="0.001" value="${ing.qty||''}" placeholder="Кол" style="width:70px;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;">
                             <button type="button" class="del-ing" data-i="${i}" style="background:var(--danger);color:white;border:none;border-radius:20px;padding:7px 10px;cursor:pointer;flex-shrink:0;">✕</button>
                         </div>`).join('');
-                    c.querySelectorAll('.del-ing').forEach(b=>b.addEventListener('click',()=>{ cardObj.ingredients.splice(parseInt(b.dataset.i),1); renderIngs(); }));
+                    // При смене товара — только обновляем itemId, не перерисовываем
+                    c.querySelectorAll('.ing-sel').forEach(sel => {
+                        sel.addEventListener('change', e => {
+                            const i = parseInt(e.target.dataset.i);
+                            const item = stockItems.value.find(s => s.id === e.target.value);
+                            if (item && cardObj.ingredients[i]) {
+                                cardObj.ingredients[i].itemId = item.id;
+                                cardObj.ingredients[i].itemName = item.name;
+                                cardObj.ingredients[i].unit = item.unit;
+                            }
+                        });
+                    });
+                    // При вводе количества — сохраняем в cardObj без перерисовки
+                    c.querySelectorAll('.ing-qty').forEach(inp => {
+                        inp.addEventListener('input', e => {
+                            const i = parseInt(e.target.dataset.i);
+                            if (cardObj.ingredients[i]) cardObj.ingredients[i].qty = parseFloat(e.target.value) || 0;
+                        });
+                    });
+                    c.querySelectorAll('.del-ing').forEach(b => b.addEventListener('click', () => {
+                        syncFromDom();
+                        cardObj.ingredients.splice(parseInt(b.dataset.i), 1);
+                        renderIngs();
+                    }));
                 };
 
                 Swal.fire({
@@ -1548,20 +1672,17 @@ createApp({
                         renderIngs();
                         document.getElementById('add-ing')?.addEventListener('click',()=>{
                             if (!stockItems.value.length) { Swal.showValidationMessage('Добавьте товары на склад'); return; }
+                            syncFromDom(); // сохраняем текущие значения
                             cardObj.ingredients.push({itemId:stockItems.value[0].id,itemName:stockItems.value[0].name,qty:0,unit:stockItems.value[0].unit});
                             renderIngs();
                         });
                     },
                     preConfirm:() => {
+                        syncFromDom();
                         const name = document.getElementById('tc-name')?.value?.trim();
                         if (!name) { Swal.showValidationMessage('Введите название'); return false; }
                         const price = parseFloat(document.getElementById('tc-price')?.value)||0;
-                        const ings = [];
-                        document.querySelectorAll('.ing-sel').forEach((sel,i)=>{
-                            const item = stockItems.value.find(s=>s.id===sel.value);
-                            const qty = parseFloat(document.querySelector(`.ing-qty[data-i="${i}"]`)?.value);
-                            if (item && !isNaN(qty) && qty>0) ings.push({itemId:item.id,itemName:item.name,qty,unit:item.unit});
-                        });
+                        const ings = cardObj.ingredients.filter(ing => ing.qty > 0);
                         cardObj.name = name; cardObj.sellPrice = price; cardObj.ingredients = ings;
                         return true;
                     }
@@ -1813,6 +1934,127 @@ createApp({
             }
         }
 
+        // ===== ЖУРНАЛ ВЫРУЧКИ (AES-256-GCM) =====
+        const cashLogUnlocked = ref(false);
+        const cashLogPin = ref('');
+        const cashLogError = ref('');
+        const cashLogEntries = ref([]);
+        let cashLogKey = null;
+
+        async function deriveCashKey(pin) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
+            return crypto.subtle.deriveKey(
+                { name: 'PBKDF2', salt: enc.encode('tuchka_cashlog_salt'), iterations: 100000, hash: 'SHA-256' },
+                keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+            );
+        }
+
+        async function encryptCashData(data, key) {
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const enc = new TextEncoder();
+            const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
+            const combined = new Uint8Array(iv.length + encrypted.byteLength);
+            combined.set(iv); combined.set(new Uint8Array(encrypted), iv.length);
+            return btoa(String.fromCharCode(...combined));
+        }
+
+        async function decryptCashData(b64, key) {
+            const combined = new Uint8Array(atob(b64).split('').map(c => c.charCodeAt(0)));
+            const iv = combined.slice(0, 12);
+            const data = combined.slice(12);
+            const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+            return JSON.parse(new TextDecoder().decode(decrypted));
+        }
+
+        async function unlockCashLog() {
+            cashLogError.value = '';
+            if (!cashLogPin.value || cashLogPin.value.length < 4) { cashLogError.value = 'Пин-код минимум 4 символа'; return; }
+            try {
+                const key = await deriveCashKey(cashLogPin.value);
+                // Проверяем есть ли сохранённые данные
+                const saved = localStorage.getItem('tuchka_cashlog');
+                if (saved) {
+                    try {
+                        const entries = await decryptCashData(saved, key);
+                        cashLogEntries.value = entries;
+                        cashLogKey = key;
+                        cashLogUnlocked.value = true;
+                    } catch {
+                        cashLogError.value = 'Неверный пин-код';
+                    }
+                } else {
+                    // Первый вход — пин устанавливается
+                    cashLogKey = key;
+                    cashLogEntries.value = [];
+                    cashLogUnlocked.value = true;
+                    await saveCashLog();
+                }
+            } catch(e) { cashLogError.value = 'Ошибка: ' + e.message; }
+        }
+
+        async function saveCashLog() {
+            if (!cashLogKey) return;
+            const encrypted = await encryptCashData(cashLogEntries.value, cashLogKey);
+            localStorage.setItem('tuchka_cashlog', encrypted);
+        }
+
+        function lockCashLog() {
+            cashLogUnlocked.value = false;
+            cashLogKey = null;
+            cashLogPin.value = '';
+            cashLogEntries.value = [];
+        }
+
+        function cashLogMonthTotal(field) {
+            const now = new Date();
+            return cashLogEntries.value
+                .filter(e => { const d = new Date(e.date); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); })
+                .reduce((s, e) => s + (parseFloat(e[field]) || 0), 0);
+        }
+
+        async function openCashLogModal() {
+            const today = new Date().toISOString().slice(0, 10);
+            const { value: res, isConfirmed } = await Swal.fire({
+                title: '💵 Запись выручки',
+                html: `
+                    <div class="input-group"><label>Дата</label><input id="cl-date" type="date" class="swal2-input" value="${today}"></div>
+                    <div class="grid-2">
+                        <div class="input-group"><label>🪙 Наличные ₽</label><input id="cl-cash" type="number" step="1" class="swal2-input" placeholder="0" value="0"></div>
+                        <div class="input-group"><label>💳 Безналичные ₽</label><input id="cl-card" type="number" step="1" class="swal2-input" placeholder="0" value="0"></div>
+                    </div>
+                    <div class="input-group"><label>Прочее ₽ (нефискальные)</label><input id="cl-other" type="number" step="1" class="swal2-input" placeholder="0" value="0"></div>
+                    <div class="input-group"><label>Примечание</label><input id="cl-note" class="swal2-input" placeholder="Необязательно"></div>
+                `,
+                showCancelButton: true, confirmButtonText: 'Сохранить', cancelButtonText: 'Отмена',
+                preConfirm: () => {
+                    const date = document.getElementById('cl-date').value;
+                    if (!date) return Swal.showValidationMessage('Выберите дату');
+                    return {
+                        id: Date.now(),
+                        date,
+                        cash: parseFloat(document.getElementById('cl-cash').value) || 0,
+                        card: parseFloat(document.getElementById('cl-card').value) || 0,
+                        other: parseFloat(document.getElementById('cl-other').value) || 0,
+                        note: document.getElementById('cl-note').value
+                    };
+                }
+            });
+            if (isConfirmed && res) {
+                cashLogEntries.value.unshift(res);
+                await saveCashLog();
+                Swal.fire({ icon: 'success', title: 'Записано', timer: 1200, showConfirmButton: false });
+            }
+        }
+
+        async function deleteCashEntry(entry) {
+            const { isConfirmed } = await Swal.fire({ title: 'Удалить запись?', text: new Date(entry.date).toLocaleDateString('ru'), showCancelButton: true, confirmButtonColor: '#E17055' });
+            if (isConfirmed) {
+                cashLogEntries.value = cashLogEntries.value.filter(e => e.id !== entry.id);
+                await saveCashLog();
+            }
+        }
+
         // ===== BACKUP =====
         function exportData() {
             const data={stock:stockItems.value,techCards:techCards.value,supplies:supplyHistory.value,sales:saleHistory.value,damage:damageHistory.value,inventory:inventoryReports.value,users:usersList.value};
@@ -1854,6 +2096,7 @@ createApp({
     handleLogin, handleRegister, logout,
     activeTab, stockItems, categories, techCards, inventoryReports, supplyHistory, usersList,
     filterCategory, searchStock, filteredStock, filteredSupplies, supplySearch,
+    stockSort, techSort, sortedTechCards,
     openItemModal, openIncomeModal, openDamageModal, openBulkSupplyModal,
     openTechCardModal: saveTechCardModal,
     saveTechCardModal,
@@ -1868,6 +2111,8 @@ createApp({
     generateAnalytics, setAnalyticsPeriod,
     openUserModal, toggleUserActive, deleteUser, resetDevice, canDeleteUser, isSuperAdmin, superAdminId, changePassword,
     exportData, importData, importSalesFile, importSalesStatus, offline,
+    cashLogUnlocked, cashLogPin, cashLogError, cashLogEntries,
+    unlockCashLog, lockCashLog, openCashLogModal, deleteCashEntry, cashLogMonthTotal,
     syncStatusText, syncStatusIcon, syncStatusClass, syncButtonClass, syncButtonIcon, forceSync,
     isDark, toggleTheme,
     formatNumber
