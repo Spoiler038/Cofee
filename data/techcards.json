@@ -346,5 +346,24 @@
         "unit": "кг"
       }
     ]
+  },
+  {
+    "id": "1777212493266_tc",
+    "name": "Флэт Уайт 250 мл",
+    "sellPrice": 220,
+    "ingredients": [
+      {
+        "itemId": "p1",
+        "itemName": "Кофе Impassion Basic 1 кг",
+        "qty": 0.018,
+        "unit": "кг"
+      },
+      {
+        "itemId": "p2",
+        "itemName": "Молоко 3.2% 1 л",
+        "qty": 0.15,
+        "unit": "л"
+      }
+    ]
   }
 ]
