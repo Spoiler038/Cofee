@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Тучка ☕ — Складской учет</title>
+    <title>Тучка ☕</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E☕%3C/text%3E%3C/svg%3E">
     <meta name="theme-color" content="#2D1B69">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -536,6 +536,7 @@
                             <div class="item-meta"><span class="badge badge-gray">{{ rep.status }}</span></div>
                         </div>
                         <button @click="viewInventoryReport(rep)" class="btn btn-sm">Детали</button>
+                        <button v-if="isSuperAdmin" @click="deleteInventoryReport(rep)" class="btn btn-danger btn-sm btn-icon"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             </div>
@@ -548,7 +549,11 @@
                 </div>
                 <div class="card">
                     <div class="filter-bar">
-                        <input type="text" v-model="supplySearch" placeholder="Поиск..." class="input">
+                        <input type="text" v-model="supplySearch" placeholder="Поиск по товару..." class="input" style="flex:1;">
+                        <input type="date" v-model="supplyDateFrom" class="input" style="width:auto;">
+                        <span style="color:var(--text-muted);font-size:12px;">—</span>
+                        <input type="date" v-model="supplyDateTo" class="input" style="width:auto;">
+                        <button @click="supplyDateFrom='';supplyDateTo=''" class="btn btn-sm">✕</button>
                     </div>
                     <div v-if="filteredSupplies.length===0" style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Нет поставок</div>
                     <div v-for="log in filteredSupplies" :key="log.id" class="row">
@@ -560,6 +565,7 @@
                             <div class="qty-badge">+{{ formatNumber(log.quantity) }} {{ log.unit }}</div>
                             <div style="font-size:12px;color:var(--text-muted);">{{ formatNumber(log.quantity * log.costPerUnit) }} ₽ · {{ formatNumber(log.costPerUnit) }}₽/{{ log.unit }}</div>
                         </div>
+                        <button v-if="user.role==='admin'" @click="deleteSupply(log)" class="btn btn-danger btn-sm btn-icon"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             </div>
@@ -792,6 +798,17 @@ function formatNumber(v) {
     return Math.round(parseFloat(v) * 100) / 100;
 }
 
+function formatStockQty(item) {
+    if (!item) return '0';
+    const qty = parseFloat(item.quantity) || 0;
+    if (item.displayUnit && item.displayRatio && item.displayRatio > 0) {
+        const converted = Math.round(qty / item.displayRatio * 1000) / 1000;
+        return `${converted} ${item.displayUnit}`;
+    }
+    return `${formatNumber(qty)} ${item.unit}`;
+}
+
+
 // Форматирует количество для отображения на складе с учётом displayUnit
 function formatStockQty(item) {
     if (!item) return '0';
@@ -995,17 +1012,28 @@ createApp({
             else if (techSort.value === 'profit') list.sort((a,b) => ((b.sellPrice||0) - calculateCardCost(b)) - ((a.sellPrice||0) - calculateCardCost(a)));
             return list;
         });
-        const filteredSupplies = computed(() => supplyHistory.value.filter(l =>
-            !supplySearch.value || l.itemName.toLowerCase().includes(supplySearch.value.toLowerCase())
-        ));
+        const supplyDateFrom = ref('');
+        const supplyDateTo = ref('');
+
+        const filteredSupplies = computed(() => {
+            return supplyHistory.value
+                .filter(l => {
+                    const matchName = !supplySearch.value || l.itemName.toLowerCase().includes(supplySearch.value.toLowerCase());
+                    const d = new Date(l.date);
+                    const matchFrom = !supplyDateFrom.value || d >= new Date(supplyDateFrom.value);
+                    const matchTo = !supplyDateTo.value || d <= new Date(supplyDateTo.value + 'T23:59:59');
+                    return matchName && matchFrom && matchTo;
+                })
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+        });
 
         async function refreshAll() {
             try {
-                const [stock, tc, sup, sal, inv, dmg, usr] = await Promise.all([
+                const [stock, tc, sup, sal, inv, dmg, usr, cfg] = await Promise.all([
                     db.getFile('stock.json'), db.getFile('techcards.json'),
                     db.getFile('supplies.json'), db.getFile('sales.json'),
                     db.getFile('inventory.json'), db.getFile('damage.json'),
-                    db.getFile('users.json')
+                    db.getFile('users.json'), db.getFile('settings.json')
                 ]);
                 stockItems.value = stock;
                 techCards.value = tc;
@@ -1015,6 +1043,8 @@ createApp({
                 damageHistory.value = dmg;
                 const cats = new Set(); stock.forEach(i => cats.add(i.category));
                 categories.value = [...cats];
+                if (cfg && cfg.damageReasons) damageReasons.value = cfg.damageReasons;
+                if (cfg && cfg.categories) { cfg.categories.forEach(c => cats.add(c)); categories.value = [...cats]; }
                 if (usr.length) usersList.value = usr;
                 else {
                     usersList.value = [
@@ -1024,6 +1054,11 @@ createApp({
                 }
             } catch(e) { console.error('refreshAll', e); offline.value = true; }
         }
+
+        const saveSettings = () => db.scheduleSave('settings.json', {
+            damageReasons: damageReasons.value,
+            categories: categories.value
+        });
 
         const saveStock = () => db.scheduleSave('stock.json', stockItems.value);
         const saveTechCards = () => db.scheduleSave('techcards.json', techCards.value);
@@ -1193,7 +1228,12 @@ createApp({
                         <div class="input-group" style="flex:1;margin-bottom:0;"><label>Единица учёта в рецептах (мл, г, шт...)</label><input id="s-unit" class="swal2-input" value="${obj.unit||''}"></div>
                         <div class="input-group" style="width:110px;margin-bottom:0;"><label>Ед. в упаковке</label><input id="s-pkg" type="number" step="0.001" class="swal2-input" placeholder="не обяз." value="${obj.packageSize||''}"></div>
                     </div>
-                    <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:4px;margin-bottom:8px;">💡 <b>Ед. в упаковке</b> — если товар приходит упаковками. Пример: горячий шоколад учитывается в <b>г</b>, приходит пачками по <b>750 г</b> → введите 750. При приходе вводите количество пачек и цену за пачку — себестоимость за грамм посчитается автоматически.</p>
+                    <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:4px;margin-bottom:4px;">💡 <b>Ед. в упаковке</b> — если товар приходит упаковками. Пример: горячий шоколад учитывается в <b>г</b>, приходит пачками по <b>750 г</b> → введите 750. При приходе вводите количество пачек и цену за пачку — себестоимость за грамм посчитается автоматически.</p>
+                    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:4px;">
+                        <div class="input-group" style="flex:1;margin-bottom:0;"><label>Единица на складе (л, кг, упак...)</label><input id="s-dunit" class="swal2-input" placeholder="пусто = как в рецептах" value="${obj.displayUnit||''}"></div>
+                        <div class="input-group" style="width:110px;margin-bottom:0;"><label>Кратность</label><input id="s-dratio" type="number" step="0.001" class="swal2-input" placeholder="напр. 1000" value="${obj.displayRatio||''}"></div>
+                    </div>
+                    <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:0;margin-bottom:8px;">💡 Пример: учёт в <b>мл</b>, склад в <b>л</b>, кратность <b>1000</b> → 10000 мл покажет <b>10 л</b></p>
                     <div style="display:flex;gap:8px;align-items:flex-end;">
                         <div class="input-group" style="flex:1;margin-bottom:0;"><label>Единица на складе (л, кг, упак...)</label><input id="s-dunit" class="swal2-input" placeholder="оставьте пустым = как в рецептах" value="${obj.displayUnit||''}"></div>
                         <div class="input-group" style="width:110px;margin-bottom:0;"><label>Кратность</label><input id="s-dratio" type="number" step="0.001" class="swal2-input" placeholder="напр. 1000" value="${obj.displayRatio||''}"></div>
@@ -1794,10 +1834,38 @@ createApp({
         }
 
         // ===== КАТЕГОРИИ =====
-        function addCategory() { if(newCategory.value&&!categories.value.includes(newCategory.value)){categories.value.push(newCategory.value);newCategory.value='';} }
-        function removeCategory(c) { if(stockItems.value.some(i=>i.category===c)){Swal.fire('Нельзя','Сначала переместите товары','warning');return;} categories.value=categories.value.filter(x=>x!==c); }
-        function addDamageReason() { if(newDamageReason.value&&!damageReasons.value.includes(newDamageReason.value)){damageReasons.value.push(newDamageReason.value);newDamageReason.value='';} }
-        function removeDamageReason(r) { damageReasons.value=damageReasons.value.filter(x=>x!==r); }
+        function addCategory() { if(newCategory.value&&!categories.value.includes(newCategory.value)){categories.value.push(newCategory.value);newCategory.value='';saveSettings();} }
+        function removeCategory(c) { if(stockItems.value.some(i=>i.category===c)){Swal.fire('Нельзя','Сначала переместите товары','warning');return;} categories.value=categories.value.filter(x=>x!==c); saveSettings(); }
+        function addDamageReason() { if(newDamageReason.value&&!damageReasons.value.includes(newDamageReason.value)){damageReasons.value.push(newDamageReason.value);newDamageReason.value='';saveSettings();} }
+        function removeDamageReason(r) { damageReasons.value=damageReasons.value.filter(x=>x!==r); saveSettings(); }
+
+        async function deleteSupply(log) {
+            const {isConfirmed} = await Swal.fire({
+                title:'Удалить поставку?',
+                text:`${log.itemName} · ${formatNumber(log.quantity)} ${log.unit} · ${new Date(log.date).toLocaleDateString()}`,
+                showCancelButton:true, confirmButtonColor:'#E17055',
+                confirmButtonText:'Удалить', cancelButtonText:'Отмена'
+            });
+            if (isConfirmed) {
+                supplyHistory.value = supplyHistory.value.filter(s => s.id !== log.id);
+                await db.saveFile('supplies.json', supplyHistory.value, true);
+                Swal.fire({icon:'success',title:'Удалено',timer:1200,showConfirmButton:false});
+            }
+        }
+
+        async function deleteInventoryReport(rep) {
+            const {isConfirmed} = await Swal.fire({
+                title:'Удалить инвентаризацию?',
+                text: new Date(rep.createdAt).toLocaleDateString(),
+                showCancelButton:true, confirmButtonColor:'#E17055',
+                confirmButtonText:'Удалить', cancelButtonText:'Отмена'
+            });
+            if (isConfirmed) {
+                inventoryReports.value = inventoryReports.value.filter(r => r.id !== rep.id);
+                await db.saveFile('inventory.json', inventoryReports.value, true);
+                Swal.fire({icon:'success',title:'Удалено',timer:1200,showConfirmButton:false});
+            }
+        }
 
         // ===== ПОЛЬЗОВАТЕЛИ =====
         async function openUserModal(u) {
@@ -1997,18 +2065,20 @@ createApp({
             try {
                 const key = await deriveCashKey(cashLogPin.value);
                 // Проверяем есть ли сохранённые данные
-                const saved = localStorage.getItem('tuchka_cashlog');
+                // Сначала пробуем загрузить из GitHub
+                const remoteRaw = await db.getFile('cashlog.json');
+                const saved = (remoteRaw && remoteRaw.encrypted) ? remoteRaw.encrypted : localStorage.getItem('tuchka_cashlog');
                 if (saved) {
                     try {
                         const entries = await decryptCashData(saved, key);
                         cashLogEntries.value = entries;
                         cashLogKey = key;
                         cashLogUnlocked.value = true;
+                        localStorage.setItem('tuchka_cashlog', saved);
                     } catch {
                         cashLogError.value = 'Неверный пин-код';
                     }
                 } else {
-                    // Первый вход — пин устанавливается
                     cashLogKey = key;
                     cashLogEntries.value = [];
                     cashLogUnlocked.value = true;
@@ -2021,6 +2091,7 @@ createApp({
             if (!cashLogKey) return;
             const encrypted = await encryptCashData(cashLogEntries.value, cashLogKey);
             localStorage.setItem('tuchka_cashlog', encrypted);
+            await db.saveFile('cashlog.json', { encrypted }, true);
         }
 
         function lockCashLog() {
@@ -2119,16 +2190,16 @@ createApp({
     user, loginPhone, loginPass, authMode, regPhone, regPass, regPass2,
     handleLogin, handleRegister, logout,
     activeTab, stockItems, categories, techCards, inventoryReports, supplyHistory, usersList,
-    filterCategory, searchStock, filteredStock, filteredSupplies, supplySearch,
+    filterCategory, searchStock, filteredStock, filteredSupplies, supplySearch, supplyDateFrom, supplyDateTo,
     stockSort, techSort, sortedTechCards,
-    openItemModal, openIncomeModal, openDamageModal, openBulkSupplyModal,
+    openItemModal, openIncomeModal, openDamageModal, openBulkSupplyModal, deleteSupply,
     openTechCardModal: saveTechCardModal,
     saveTechCardModal,
     calculateCardCost,
     sellRecipe,
     openSaleByRecipeModal,
     deleteTechCard,
-    startInventory, activeInventory, inventoryCounts, completeInventory, cancelInventory, viewInventoryReport,
+    startInventory, activeInventory, inventoryCounts, completeInventory, cancelInventory, viewInventoryReport, deleteInventoryReport,
     addCategory, removeCategory, newCategory,
     damageReasons, newDamageReason, addDamageReason, removeDamageReason,
     analyticsStartDate, analyticsEndDate, profitReport, salesByCategory, analyticsGenerated,
