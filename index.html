@@ -454,10 +454,10 @@
                     <div v-for="item in filteredStock" :key="item.id" class="row">
                         <div class="row-left">
                             <div class="item-name">{{ item.name }} <span class="badge" style="font-size:10px;">{{ item.category }}</span></div>
-                            <div class="item-meta">{{ item.unit }} · себест. {{ formatNumber(item.cost) }} ₽</div>
+                            <div class="item-meta">{{ item.unit }} · себест. {{ formatNumber(item.cost) }} ₽<span v-if="item.displayUnit"> · склад в {{ item.displayUnit }}</span></div>
                         </div>
                         <div class="row-right">
-                            <span class="qty-badge">{{ formatNumber(item.quantity) }} {{ item.unit }}</span>
+                            <span class="qty-badge">{{ formatStockQty(item) }}</span>
                             <button v-if="user.role==='admin'" @click="openItemModal(item)" class="btn btn-icon btn-sm"><i class="fas fa-edit"></i></button>
                             <button @click="openIncomeModal(item)" class="btn btn-primary btn-sm"><i class="fas fa-truck"></i></button>
                             <button v-if="user.role==='admin'" @click="openDamageModal(item)" class="btn btn-danger btn-sm"><i class="fas fa-minus-circle"></i></button>
@@ -790,6 +790,17 @@ const SUPER_ADMIN_ID = 'u1';
 function formatNumber(v) {
     if (v === undefined || v === null || isNaN(parseFloat(v))) return '0';
     return Math.round(parseFloat(v) * 100) / 100;
+}
+
+// Форматирует количество для отображения на складе с учётом displayUnit
+function formatStockQty(item) {
+    if (!item) return '0';
+    const qty = parseFloat(item.quantity) || 0;
+    if (item.displayUnit && item.displayRatio && item.displayRatio > 0) {
+        const converted = Math.round(qty / item.displayRatio * 1000) / 1000;
+        return `${converted} ${item.displayUnit}`;
+    }
+    return `${formatNumber(qty)} ${item.unit}`;
 }
 
 function normalizePhone(phone) {
@@ -1179,10 +1190,15 @@ createApp({
                     <div class="input-group"><label>Название</label><input id="s-name" class="swal2-input" value="${(obj.name||'').replace(/"/g,'&quot;')}"></div>
                     <div class="input-group"><label>Категория</label><select id="s-cat" class="swal2-select">${cats.map(c=>`<option ${c===obj.category?'selected':''}>${c}</option>`).join('')}</select></div>
                     <div style="display:flex;gap:8px;align-items:flex-end;">
-                        <div class="input-group" style="flex:1;margin-bottom:0;"><label>Единица учёта (мл, г, кг, шт...)</label><input id="s-unit" class="swal2-input" value="${obj.unit||''}"></div>
+                        <div class="input-group" style="flex:1;margin-bottom:0;"><label>Единица учёта в рецептах (мл, г, шт...)</label><input id="s-unit" class="swal2-input" value="${obj.unit||''}"></div>
                         <div class="input-group" style="width:110px;margin-bottom:0;"><label>Ед. в упаковке</label><input id="s-pkg" type="number" step="0.001" class="swal2-input" placeholder="не обяз." value="${obj.packageSize||''}"></div>
                     </div>
                     <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:4px;margin-bottom:8px;">💡 <b>Ед. в упаковке</b> — если товар приходит упаковками. Пример: горячий шоколад учитывается в <b>г</b>, приходит пачками по <b>750 г</b> → введите 750. При приходе вводите количество пачек и цену за пачку — себестоимость за грамм посчитается автоматически.</p>
+                    <div style="display:flex;gap:8px;align-items:flex-end;">
+                        <div class="input-group" style="flex:1;margin-bottom:0;"><label>Единица на складе (л, кг, упак...)</label><input id="s-dunit" class="swal2-input" placeholder="оставьте пустым = как в рецептах" value="${obj.displayUnit||''}"></div>
+                        <div class="input-group" style="width:110px;margin-bottom:0;"><label>Кратность</label><input id="s-dratio" type="number" step="0.001" class="swal2-input" placeholder="напр. 1000" value="${obj.displayRatio||''}"></div>
+                    </div>
+                    <p style="font-size:11px;color:var(--text-muted);text-align:left;margin-top:4px;margin-bottom:8px;">💡 <b>Единица на складе</b> — как отображать остаток. Пример: учёт в <b>мл</b>, на складе показывать в <b>л</b> → кратность <b>1000</b>. Молоко 10000 мл → покажет <b>10 л</b>.</p>
                     <div class="grid-2">
                         <div class="input-group"><label>Себестоимость ₽ за ${obj.unit||'единицу'}</label><input id="s-cost" type="number" step="0.001" class="swal2-input" value="${obj.cost||0}"></div>
                         <div class="input-group"><label>Кол-во на складе</label><input id="s-qty" type="number" step="0.01" class="swal2-input" value="${obj.quantity||0}"></div>
@@ -1196,10 +1212,18 @@ createApp({
                     const unit = document.getElementById('s-unit').value;
                     const cost = parseFloat(document.getElementById('s-cost').value);
                     const pkg = parseFloat(document.getElementById('s-pkg').value);
+                    const dratio = parseFloat(document.getElementById('s-dratio').value);
+                    const dunit = document.getElementById('s-dunit').value.trim();
                     if (!name) return Swal.showValidationMessage('Введите название');
                     if (!unit) return Swal.showValidationMessage('Введите единицу');
                     if (isNaN(cost)) return Swal.showValidationMessage('Введите себестоимость');
-                    return { name, category: document.getElementById('s-cat').value, unit, cost, quantity: parseFloat(document.getElementById('s-qty').value)||0, packageSize: isNaN(pkg)||pkg<=0 ? null : pkg };
+                    return {
+                        name, category: document.getElementById('s-cat').value, unit, cost,
+                        quantity: parseFloat(document.getElementById('s-qty').value)||0,
+                        packageSize: isNaN(pkg)||pkg<=0 ? null : pkg,
+                        displayUnit: dunit || null,
+                        displayRatio: dunit && !isNaN(dratio) && dratio > 0 ? dratio : null
+                    };
                 }
             });
             if (res) {
@@ -1372,16 +1396,16 @@ createApp({
                         if (isNaN(c) || c <= 0) { Swal.showValidationMessage(`Строка ${i+1}: введите цену`); hasError = true; break; }
                     }
                     if (hasError) return false;
+                    // Сохраняем дату прямо сейчас пока DOM ещё доступен
+                    rows._savedDate = date;
                     return { date };
                 }
             });
 
             if (!isConfirmed) return;
 
-            const supplyDate = new Date(rows._date || today + 'T12:00:00').toISOString();
-            // Берём дату из последнего preConfirm
-            const bulkDate = document.getElementById('bulk-date')?.value || today;
-            const finalDate = new Date(bulkDate + 'T12:00:00').toISOString();
+            // Используем дату сохранённую в preConfirm (DOM уже закрыт)
+            const finalDate = new Date((rows._savedDate || today) + 'T12:00:00').toISOString();
             const newSupplies = [];
 
             for (const row of rows) {
@@ -2115,7 +2139,7 @@ createApp({
     unlockCashLog, lockCashLog, openCashLogModal, deleteCashEntry, cashLogMonthTotal,
     syncStatusText, syncStatusIcon, syncStatusClass, syncButtonClass, syncButtonIcon, forceSync,
     isDark, toggleTheme,
-    formatNumber
+    formatNumber, formatStockQty
 };
     }
 }).mount('#app');
