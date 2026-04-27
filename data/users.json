@@ -16,5 +16,13 @@
     "role": "admin",
     "isActive": true,
     "deviceId": "dev_3g17tlofrpwmoe713m6"
+  },
+  {
+    "id": "1777301000781",
+    "name": "София",
+    "phone": "79779336016",
+    "password": "",
+    "role": "barista",
+    "isActive": true
   }
 ]
