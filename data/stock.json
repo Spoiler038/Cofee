@@ -13,11 +13,11 @@
     "id": "p2",
     "name": "Молоко 3.2% 1 л",
     "category": "Продукты",
-    "unit": "мл",
-    "cost": 0.09,
+    "unit": "л",
+    "cost": 90,
     "sellPrice": 150,
-    "quantity": 23000,
-    "packageSize": 1000
+    "quantity": 12,
+    "packageSize": null
   },
   {
     "id": "p3",
@@ -50,10 +50,10 @@
     "id": "1777113507617_0.2226108045142684",
     "name": "Сливки 10% 0,5 л",
     "category": "Продукты",
-    "unit": "мл",
-    "cost": 0.25,
-    "quantity": 10000,
-    "packageSize": 480
+    "unit": "л",
+    "cost": 240,
+    "quantity": 10,
+    "packageSize": 0.48
   },
   {
     "id": "1777115323315_0.8943767585949562",
@@ -357,10 +357,10 @@
     "id": "1777208706722_0.6131737584535747",
     "name": "Горячий шоколад",
     "category": "Продукты",
-    "unit": "г",
-    "cost": 1.3,
-    "quantity": 750,
-    "packageSize": 750
+    "unit": "кг",
+    "cost": 1300,
+    "quantity": 0.75,
+    "packageSize": null
   },
   {
     "id": "1777212681375_0.8473571368629471",
