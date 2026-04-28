@@ -6,7 +6,7 @@
   "scope": "/Coffee/",
   "display": "standalone",
   "theme_color": "#7B8CDE",
-  "background_color": "#FFFFFF",
+  "background_color": "#F0EEFF",
   "icons": [
     {
       "src": "/Coffee/icons/icon-72.png",
