@@ -24,5 +24,13 @@
     "password": "",
     "role": "barista",
     "isActive": true
+  },
+  {
+    "id": "1777335967220",
+    "name": "Константин",
+    "phone": "79660707073",
+    "password": "",
+    "role": "admin",
+    "isActive": true
   }
 ]
