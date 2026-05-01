@@ -728,18 +728,23 @@
                     </div>
                     <div class="card">
                         <div v-if="cashLogEntries.length===0" style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Нет записей</div>
-                        <div v-for="entry in cashLogEntries" :key="entry.id" class="row">
-                            <div class="row-left">
-                                <div class="item-name">{{ new Date(entry.date).toLocaleDateString('ru') }}</div>
-                                <div class="item-meta" v-if="entry.note">{{ entry.note }}</div>
-                            </div>
-                            <div style="text-align:right;font-size:13px;flex-shrink:0;">
-                                <div style="color:var(--success);">🪙 {{ formatNumber(entry.cash) }} ₽</div>
-                                <div style="color:var(--primary);">💳 {{ formatNumber(entry.card) }} ₽</div>
-                                <div v-if="entry.other" style="color:var(--text-muted);">+ {{ formatNumber(entry.other) }} ₽</div>
-                            </div>
-                            <button @click="deleteCashEntry(entry)" class="btn btn-danger btn-sm btn-icon"><i class="fas fa-trash"></i></button>
-                        </div>
+                       <div v-for="entry in cashLogEntries" :key="entry.id" class="row">
+    <div class="row-left">
+        <div class="item-name">
+            {{ new Date(entry.date).toLocaleDateString('ru') }}
+            <span style="margin-left: 12px; font-weight: 800; color: var(--success);">
+                {{ formatNumber((entry.cash || 0) + (entry.card || 0) + (entry.other || 0)) }} ₽
+            </span>
+        </div>
+        <div class="item-meta" v-if="entry.note">{{ entry.note }}</div>
+    </div>
+    <div style="text-align:right;font-size:13px;flex-shrink:0;">
+        <div style="color:var(--success);">🪙 {{ formatNumber(entry.cash) }} ₽</div>
+        <div style="color:var(--primary);">💳 {{ formatNumber(entry.card) }} ₽</div>
+        <div v-if="entry.other" style="color:var(--text-muted);">+ {{ formatNumber(entry.other) }} ₽</div>
+    </div>
+    <button @click="deleteCashEntry(entry)" class="btn btn-danger btn-sm btn-icon"><i class="fas fa-trash"></i></button>
+</div>
                     </div>
                     <div class="card" style="text-align:center;">
                         <button @click="lockCashLog" class="btn"><i class="fas fa-lock"></i> Заблокировать</button>
