@@ -1365,14 +1365,6 @@ createApp({
                 else { usersList.value = [{ id: 'u1', phone: '79778700833', password: '123Qq', role: 'admin', name: 'Артур', isActive: true }]; await db.saveFile('users.json', usersList.value); }
             } catch(e) { console.error('refreshAll', e); offline.value = true; }
         }
-        const saveStock = () => db.scheduleSave('stock.json', stockItems.value);
-        const saveTechCards = () => db.scheduleSave('techcards.json', techCards.value);
-        const saveUsers = () => db.scheduleSave('users.json', usersList.value);
-        const saveSupply = (s) => { supplyHistory.value.unshift(s); db.scheduleSave('supplies.json', supplyHistory.value); };
-        const saveSale = (s) => { saleHistory.value.unshift(s); db.scheduleSave('sales.json', saleHistory.value); };
-        const saveDamage = (d) => { damageHistory.value.unshift(d); db.scheduleSave('damage.json', damageHistory.value); };
-        const saveInventory = (r) => { inventoryReports.value.unshift(r); db.scheduleSave('inventory.json', inventoryReports.value); };
-        const saveSettings = () => db.scheduleSave('settings.json', { damageReasons: damageReasons.value, categories: categories.value });
         async function forceSync() {
             if (syncState.value === 'syncing') return;
             syncState.value = 'syncing';
