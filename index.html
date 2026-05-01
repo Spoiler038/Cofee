@@ -396,22 +396,33 @@
 
             <!-- СКЛАД -->
             <div v-show="activeTab==='stock'">
-                <div class="page-header">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
                     <span class="page-title">📦 Склад</span>
+                    <select v-model="filterCategory" class="badge" style="width:auto;">
+                        <option value="">Все разделы</option>
+                        <option v-for="cat in categories" :value="cat">{{ cat }}</option>
+                    </select>
+                    <input type="text" v-model="searchStock" placeholder="Поиск..." class="input" style="width:80px;min-width:0;flex:1;">
+                    <select v-model="stockSort" class="badge" style="width:auto;">
+                        <option value="name">А-Я</option>
+                        <option value="category">По разделу</option>
+                        <option value="qty">По кол-ву</option>
+                    </select>
                     <button v-if="user.role==='admin'" @click="openItemModal(null)" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Товар</button>
                 </div>
                 <div class="card">
-                    <div class="filter-bar">
-                        <select v-model="filterCategory" class="badge" style="width:auto;">
-                            <option value="">Все разделы</option>
-                            <option v-for="cat in categories" :value="cat">{{ cat }}</option>
-                         </select>
-                        <input type="text" v-model="searchStock" placeholder="Поиск..." class="input" style="flex:1;min-width:80px;">
-                        <select v-model="stockSort" class="badge" style="width:auto;">
-                            <option value="name">А-Я</option>
-                            <option value="category">По разделу</option>
-                            <option value="qty">По кол-ву</option>
-                        </select>
+                    <div v-if="filteredStock.length === 0" style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Нет товаров</div>
+                    <div v-for="item in filteredStock" :key="item.id" class="row">
+                        <div class="row-left">
+                            <div class="item-name">{{ item.name }} <span class="badge" style="font-size:10px;">{{ item.category }}</span></div>
+                            <div class="item-meta">{{ item.unit }} · себест. {{ formatNumber(item.cost) }} ₽<span v-if="item.displayUnit"> · склад в {{ item.displayUnit }}</span></div>
+                        </div>
+                        <div class="row-right">
+                            <span class="qty-badge">{{ formatStockQty(item) }}</span>
+                            <button v-if="user.role==='admin'" @click="openItemModal(item)" class="btn btn-icon btn-sm"><i class="fas fa-edit"></i></button>
+                            <button @click="openIncomeModal(item)" class="btn btn-primary btn-sm"><i class="fas fa-truck"></i></button>
+                            <button v-if="user.role==='admin'" @click="openDamageModal(item)" class="btn btn-danger btn-sm"><i class="fas fa-minus-circle"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1365,6 +1376,14 @@ createApp({
                 else { usersList.value = [{ id: 'u1', phone: '79778700833', password: '123Qq', role: 'admin', name: 'Артур', isActive: true }]; await db.saveFile('users.json', usersList.value); }
             } catch(e) { console.error('refreshAll', e); offline.value = true; }
         }
+        const saveStock = () => db.scheduleSave('stock.json', stockItems.value);
+        const saveTechCards = () => db.scheduleSave('techcards.json', techCards.value);
+        const saveUsers = () => db.scheduleSave('users.json', usersList.value);
+        const saveSupply = (s) => { supplyHistory.value.unshift(s); db.scheduleSave('supplies.json', supplyHistory.value); };
+        const saveSale = (s) => { saleHistory.value.unshift(s); db.scheduleSave('sales.json', saleHistory.value); };
+        const saveDamage = (d) => { damageHistory.value.unshift(d); db.scheduleSave('damage.json', damageHistory.value); };
+        const saveInventory = (r) => { inventoryReports.value.unshift(r); db.scheduleSave('inventory.json', inventoryReports.value); };
+        const saveSettings = () => db.scheduleSave('settings.json', { damageReasons: damageReasons.value, categories: categories.value });
         async function forceSync() {
             if (syncState.value === 'syncing') return;
             syncState.value = 'syncing';
