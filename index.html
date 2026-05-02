@@ -433,27 +433,27 @@
                     </div>
                 </div>
 
-                <!-- Подвкладка: список продаж-чеков -->
-                <div v-if="techSubTab==='sales'">
-                    <div v-if="saleHistory.length===0" class="card" style="text-align:center;color:var(--text-muted);padding:30px;">Нет продаж</div>
-                    <div class="card" v-for="sale in saleHistory" :key="sale.id" style="margin-bottom:8px;">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-weight:800;font-size:14px;">{{ sale.recipeName }}
-                                    <span style="font-weight:600;color:var(--text-muted);font-size:12px;">× {{ sale.quantity }}</span>
-                                </div>
-                                <div style="font-size:11px;color:var(--text-muted);">{{ new Date(sale.date).toLocaleString() }}</div>
-                            </div>
-                            <div style="text-align:right;flex-shrink:0;">
-                                <div style="font-weight:800;color:var(--success);">{{ formatNumber(sale.revenue) }} ₽</div>
-                                <div style="font-size:11px;color:var(--text-muted);">себест. {{ formatNumber(sale.totalCost) }} ₽</div>
-                            </div>
-                            <div style="display:flex;gap:4px;flex-shrink:0;">
-                                <button v-if="user.role==='admin'" @click="deleteSaleRecord(sale)" class="btn btn-danger btn-sm btn-icon" title="Удалить и вернуть на склад"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>
+               <!-- Подвкладка: список продаж-чеков -->
+<div v-if="techSubTab==='sales'">
+    <div v-if="!saleHistory || saleHistory.length===0" class="card" style="text-align:center;color:var(--text-muted);padding:30px;">Нет продаж</div>
+    <div class="card" v-for="sale in (saleHistory || [])" :key="sale.id" style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:800;font-size:14px;">{{ sale.recipeName }}
+                    <span style="font-weight:600;color:var(--text-muted);font-size:12px;">× {{ sale.quantity }}</span>
                 </div>
+                <div style="font-size:11px;color:var(--text-muted);">{{ new Date(sale.date).toLocaleString() }}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+                <div style="font-weight:800;color:var(--success);">{{ formatNumber(sale.revenue) }} ₽</div>
+                <div style="font-size:11px;color:var(--text-muted);">себест. {{ formatNumber(sale.totalCost) }} ₽</div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0;">
+                <button v-if="user.role==='admin'" @click="deleteSaleRecord(sale)" class="btn btn-danger btn-sm btn-icon" title="Удалить и вернуть на склад"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
 
                 <!-- Подвкладка: список рецептов -->
                 <div v-if="techSubTab==='recipes'">
@@ -1066,25 +1066,25 @@ createApp({
 
         // ===== ОСНОВНЫЕ ФУНКЦИИ =====
         async function refreshAll() {
-            try {
-                const [stock, tc, sup, sal, inv, dmg, usr, cfg] = await Promise.all([
-                    db.getFile('stock.json'), db.getFile('techcards.json'), db.getFile('supplies.json'), db.getFile('sales.json'),
-                    db.getFile('inventory.json'), db.getFile('damage.json'), db.getFile('users.json'), db.getFile('settings.json')
-                ]);
-                stockItems.value = stock;
-                techCards.value = tc;
-                supplyHistory.value = sup;
-                saleHistory.value = sal;
-                inventoryReports.value = inv;
-                damageHistory.value = dmg;
-                const cats = new Set(); stock.forEach(i => cats.add(i.category));
-                categories.value = [...cats];
-                if (cfg && cfg.damageReasons) damageReasons.value = cfg.damageReasons;
-                if (cfg && cfg.categories) { cfg.categories.forEach(c => cats.add(c)); categories.value = [...cats]; }
-                if (usr.length) usersList.value = usr;
-                else { usersList.value = [{ id: 'u1', phone: '79778700833', password: '123Qq', role: 'admin', name: 'Артур', isActive: true }]; await db.saveFile('users.json', usersList.value); }
-            } catch(e) { console.error('refreshAll', e); offline.value = true; }
-        }
+    try {
+        const [stock, tc, sup, sal, inv, dmg, usr, cfg] = await Promise.all([
+            db.getFile('stock.json'), db.getFile('techcards.json'), db.getFile('supplies.json'), db.getFile('sales.json'),
+            db.getFile('inventory.json'), db.getFile('damage.json'), db.getFile('users.json'), db.getFile('settings.json')
+        ]);
+        stockItems.value = Array.isArray(stock) ? stock : [];
+        techCards.value = Array.isArray(tc) ? tc : [];
+        supplyHistory.value = Array.isArray(sup) ? sup : [];
+        saleHistory.value = Array.isArray(sal) ? sal : [];
+        inventoryReports.value = Array.isArray(inv) ? inv : [];
+        damageHistory.value = Array.isArray(dmg) ? dmg : [];
+        const cats = new Set(); stockItems.value.forEach(i => cats.add(i.category));
+        categories.value = [...cats];
+        if (cfg && cfg.damageReasons) damageReasons.value = cfg.damageReasons;
+        if (cfg && cfg.categories) { cfg.categories.forEach(c => cats.add(c)); categories.value = [...cats]; }
+        if (usr.length) usersList.value = usr;
+        else { usersList.value = [{ id: 'u1', phone: '79778700833', password: '123Qq', role: 'admin', name: 'Артур', isActive: true }]; await db.saveFile('users.json', usersList.value); }
+    } catch(e) { console.error('refreshAll', e); offline.value = true; }
+}
         const saveStock = () => db.scheduleSave('stock.json', stockItems.value);
         const saveTechCards = () => db.scheduleSave('techcards.json', techCards.value);
         const saveUsers = () => db.scheduleSave('users.json', usersList.value);
