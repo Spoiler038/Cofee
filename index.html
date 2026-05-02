@@ -302,7 +302,7 @@
         @media (max-width: 640px) {
             .container { padding-left: 10px; padding-right: 10px; }
             .login-card { padding: 28px 20px; }
-            .page-header { flex-direction: column; align-items: stretch; }
+            .page-header { flex-direction: row; align-items: stretch; }
         }
         .swal2-popup { font-family: 'Nunito', sans-serif !important; border-radius: 20px !important; max-width: 95vw !important; }
         .swal2-title { font-family: 'Nunito', sans-serif !important; font-weight: 800 !important; font-size: 18px !important; }
@@ -534,9 +534,9 @@
                 <div class="card">
                     <div class="filter-bar">
                         <input type="text" v-model="supplySearch" placeholder="Поиск по товару..." class="input" style="flex:1;">
-                        <input type="date" v-model="supplyDateFrom" class="input" style="width:auto;">
+                        <input type="date" v-model="supplyDateFrom" class="input" style="width:20%;">
                         <span style="color:var(--text-muted);font-size:12px;">—</span>
-                        <input type="date" v-model="supplyDateTo" class="input" style="width:auto;">
+                        <input type="date" v-model="supplyDateTo" class="input" style="width:20%;">
                         <button @click="supplyDateFrom='';supplyDateTo=''" class="btn btn-sm">✕</button>
                     </div>
                     <div v-if="filteredSupplies.length===0" style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Нет поставок</div>
