@@ -1077,13 +1077,28 @@ createApp({
         saleHistory.value = Array.isArray(sal) ? sal : [];
         inventoryReports.value = Array.isArray(inv) ? inv : [];
         damageHistory.value = Array.isArray(dmg) ? dmg : [];
-        const cats = new Set(); stockItems.value.forEach(i => cats.add(i.category));
+        
+        const cats = new Set(); 
+        stockItems.value.forEach(i => cats.add(i.category));
         categories.value = [...cats];
+        
         if (cfg && cfg.damageReasons) damageReasons.value = cfg.damageReasons;
-        if (cfg && cfg.categories) { cfg.categories.forEach(c => cats.add(c)); categories.value = [...cats]; }
-        if (usr.length) usersList.value = usr;
-        else { usersList.value = [{ id: 'u1', phone: '79778700833', password: '123Qq', role: 'admin', name: 'Артур', isActive: true }]; await db.saveFile('users.json', usersList.value); }
-    } catch(e) { console.error('refreshAll', e); offline.value = true; }
+        if (cfg && cfg.categories) { 
+            cfg.categories.forEach(c => cats.add(c)); 
+            categories.value = [...cats]; 
+        }
+        
+        
+        usersList.value = Array.isArray(usr) ? usr : [];
+        
+        // Попытка автовхода после загрузки
+        if (!user.value && tryAutoLogin()) {
+            activeTab.value = 'stock';
+        }
+    } catch(e) { 
+        console.error('refreshAll', e); 
+        offline.value = true; 
+    }
 }
         const saveStock = () => db.scheduleSave('stock.json', stockItems.value);
         const saveTechCards = () => db.scheduleSave('techcards.json', techCards.value);
@@ -1105,17 +1120,29 @@ createApp({
         }
         
         function tryAutoLogin() {
-            const saved = localStorage.getItem('tuchka_session');
-            if (!saved) return false;
-            try {
-                const sess = JSON.parse(saved);
-                const found = usersList.value.find(u => u.id === sess.id && u.isActive !== false);
-                if (!found) { localStorage.removeItem('tuchka_session'); return false; }
-                if (found.id !== SUPER_ADMIN_ID && found.deviceId && found.deviceId !== getDeviceId()) { localStorage.removeItem('tuchka_session'); return false; }
-                user.value = { id: found.id, phone: found.phone, role: found.role, name: found.name };
-                return true;
-            } catch { return false; }
+    const saved = localStorage.getItem('tuchka_session');
+    if (!saved) return false;
+    try {
+        const sess = JSON.parse(saved);
+        // Проверяем, что usersList уже загружен и содержит пользователя
+        if (!usersList.value || usersList.value.length === 0) return false;
+        const found = usersList.value.find(u => u.id === sess.id && u.isActive !== false);
+        if (!found) { 
+            localStorage.removeItem('tuchka_session'); 
+            return false; 
         }
+        // Суперадмин не проверяет устройство
+        if (found.id !== SUPER_ADMIN_ID && found.deviceId && found.deviceId !== getDeviceId()) { 
+            localStorage.removeItem('tuchka_session'); 
+            return false; 
+        }
+        user.value = { id: found.id, phone: found.phone, role: found.role, name: found.name };
+        return true;
+    } catch { 
+        localStorage.removeItem('tuchka_session');
+        return false; 
+    }
+}
         
         async function changePassword() {
             const { value: res, isConfirmed } = await Swal.fire({
