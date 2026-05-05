@@ -14,5 +14,13 @@
     "password": "",
     "role": "barista",
     "isActive": true
+  },
+  {
+    "id": "1778003800542",
+    "name": "Тест",
+    "phone": "79991234567",
+    "password": "123",
+    "role": "barista",
+    "isActive": true
   }
 ]
