@@ -11,10 +11,9 @@
     "id": "1778003756403",
     "name": "София",
     "phone": "79779336016",
-    "password": "75992a5ac67ff644d3063976c2effd10bdd93fcc109798e3d5c1acf2e530d01a",
+    "password": "1004",
     "role": "barista",
-    "isActive": true,
-    "deviceId": "dev_c040w60od74mou41u8e"
+    "isActive": true
   },
   {
     "id": "1778003800542",
