@@ -11,9 +11,10 @@
     "id": "1778003756403",
     "name": "София",
     "phone": "79779336016",
-    "password": "",
+    "password": "1004",
     "role": "barista",
-    "isActive": true
+    "isActive": true,
+    "deviceId": "dev_c040w60od74mou41u8e"
   },
   {
     "id": "1778003800542",
