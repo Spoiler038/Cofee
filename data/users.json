@@ -21,6 +21,7 @@
     "phone": "79771627484",
     "password": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "role": "barista",
-    "isActive": true
+    "isActive": true,
+    "deviceId": "dev_45ztq7o0oe2mou44s03"
   }
 ]
