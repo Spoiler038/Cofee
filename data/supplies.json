@@ -1,5 +1,14 @@
 [
   {
+    "id": 1778263814531,
+    "itemId": "p1",
+    "itemName": "Кофе Impassion Basic 1 кг",
+    "quantity": 2,
+    "unit": "кг",
+    "costPerUnit": 1875,
+    "date": "2026-05-08T18:10:14.531Z"
+  },
+  {
     "id": "1777214030921_a8esvo6jtdu",
     "itemId": "1777120707855_0.3198698028326399",
     "itemName": "Сироп Лимон Монин 1 л",
