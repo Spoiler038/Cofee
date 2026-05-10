@@ -1009,7 +1009,37 @@ createApp({
             applyCashLogFilter();
         }
 
-       // Функция для баристы — получить или создать запись за сегодня (только за сегодня)
+
+        // Функция для баристы — получить или создать запись за сегодня (только за сегодня)
+async function getOrCreateTodayCashEntry() {
+    // Используем локальную дату, игнорируя часовой пояс
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const today = `${year}-${month}-${day}`;
+    
+    // Ищем запись ТОЛЬКО за сегодня
+    let entry = cashLogEntries.value.find(e => e.date === today);
+    
+    if (!entry) {
+        // Если нет записи за сегодня — создаём новую с нулями
+        entry = {
+            id: Date.now(),
+            date: today,
+            cash: 0,
+            card: 0,
+            other: 0,
+            note: ''
+        };
+        cashLogEntries.value.unshift(entry);
+        await saveCashLog();
+    }
+    todayCashEntryData.value = entry;
+    return entry;
+}
+
+       
 // Обновить отображение сегодняшней выручки (без создания новой записи)
 async function refreshTodayCashEntry() {
     const now = new Date();
@@ -1025,21 +1055,7 @@ async function refreshTodayCashEntry() {
         todayCashEntryData.value = { cash: 0, card: 0, other: 0, date: today };
     }
 }
-        // Обновить отображение сегодняшней выручки (без создания новой записи)
-async function refreshTodayCashEntry() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const today = `${year}-${month}-${day}`;
-    
-    const entry = cashLogEntries.value.find(e => e.date === today);
-    if (entry) {
-        todayCashEntryData.value = entry;
-    } else {
-        todayCashEntryData.value = { cash: 0, card: 0, other: 0, date: today };
-    }
-}
+       
 
 // Функция для баристы — сохранить/обновить запись за сегодня
 async function saveTodayCashEntry(entry) {
