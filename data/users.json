@@ -13,7 +13,8 @@
     "phone": "79779336016",
     "password": "75992a5ac67ff644d3063976c2effd10bdd93fcc109798e3d5c1acf2e530d01a",
     "role": "barista",
-    "isActive": true
+    "isActive": true,
+    "deviceId": "dev_45ztq7o0oe2mou44s03"
   },
   {
     "id": "1778103973773",
